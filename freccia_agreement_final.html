@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>FRECCIA 西新井店 利用規約同意書</title>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600;700&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+    --rose: #E8756A;
+    --rose-light: #F5A49D;
+    --rose-pale: #FDF0EE;
+    --cream: #FDFAF8;
+    --charcoal: #2C2420;
+    --warm-gray: #8C7B76;
+    --border: rgba(232,117,106,0.2);
+    --white: #FFFFFF;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { font-family: 'Noto Sans JP', sans-serif; background: var(--cream); color: var(--charcoal); min-height: 100vh; }
+  .header { background: var(--white); border-bottom: 1px solid var(--border); padding: 16px 24px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 20px rgba(44,36,32,0.06); }
+  .header-brand { font-family: 'Shippori Mincho', serif; font-size: 12px; letter-spacing: 0.3em; color: var(--warm-gray); margin-bottom: 3px; }
+  .header-title { font-family: 'Shippori Mincho', serif; font-size: 18px; font-weight: 700; color: var(--charcoal); letter-spacing: 0.08em; }
+  .steps { display: flex; justify-content: center; align-items: center; padding: 16px 24px; background: var(--white); border-bottom: 1px solid var(--border); }
+  .step { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+  .step-num { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; color: var(--warm-gray); transition: all 0.3s ease; }
+  .step.active .step-num { background: var(--rose); border-color: var(--rose); color: var(--white); }
+  .step.done .step-num { background: var(--rose-pale); border-color: var(--rose); color: var(--rose); }
+  .step-label { font-size: 10px; color: var(--warm-gray); white-space: nowrap; }
+  .step.active .step-label { color: var(--rose); font-weight: 500; }
+  .step-line { width: 36px; height: 1px; background: var(--border); margin: 0 4px 16px; }
+  .page { display: none; padding: 24px 20px 120px; max-width: 640px; margin: 0 auto; }
+  .page.active { display: block; animation: fadeIn 0.35s ease; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+  .card { background: var(--white); border-radius: 16px; padding: 24px; margin-bottom: 16px; border: 1px solid var(--border); box-shadow: 0 2px 16px rgba(44,36,32,0.04); }
+  .card-title { font-family: 'Shippori Mincho', serif; font-size: 15px; font-weight: 700; color: var(--rose); margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); letter-spacing: 0.05em; }
+  .card-desc { font-size: 13px; line-height: 1.85; color: var(--warm-gray); margin-bottom: 20px; padding: 14px 16px; background: var(--rose-pale); border-radius: 10px; border-left: 3px solid var(--rose-light); }
+  .field { margin-bottom: 18px; }
+  .field:last-child { margin-bottom: 0; }
+  label { display: block; font-size: 12px; font-weight: 500; color: var(--warm-gray); letter-spacing: 0.06em; margin-bottom: 7px; }
+  label .req { color: var(--rose); margin-left: 3px; }
+  input[type="text"], input[type="email"], input[type="tel"], input[type="date"] { width: 100%; padding: 14px 16px; border: 1.5px solid var(--border); border-radius: 10px; font-family: 'Noto Sans JP', sans-serif; font-size: 16px; color: var(--charcoal); background: var(--cream); outline: none; transition: border-color 0.2s ease; -webkit-appearance: none; }
+  input:focus { border-color: var(--rose); background: var(--white); }
+  .terms-box { background: var(--cream); border: 1px solid var(--border); border-radius: 12px; padding: 20px; height: 380px; overflow-y: scroll; font-size: 13px; line-height: 1.9; color: var(--charcoal); -webkit-overflow-scrolling: touch; }
+  .terms-chapter { font-weight: 700; font-size: 14px; margin: 20px 0 8px; color: var(--rose); font-family: 'Shippori Mincho', serif; }
+  .terms-chapter:first-child { margin-top: 0; }
+  .terms-article { font-weight: 600; margin: 14px 0 5px; }
+  .terms-body { margin-bottom: 5px; }
+  .terms-item { padding-left: 14px; margin-bottom: 3px; position: relative; }
+  .terms-item::before { content: '・'; position: absolute; left: 0; color: var(--rose); }
+  .terms-version { margin-top: 20px; padding: 10px 14px; background: var(--rose-pale); border-radius: 8px; font-size: 12px; color: var(--warm-gray); text-align: center; border: 1px solid var(--border); }
+  .scroll-progress { height: 3px; background: var(--border); border-radius: 2px; margin-top: 10px; overflow: hidden; }
+  .scroll-bar { height: 100%; background: var(--rose); border-radius: 2px; width: 0%; transition: width 0.2s ease; }
+  .scroll-hint { text-align: center; font-size: 11px; color: var(--warm-gray); margin-top: 8px; }
+  .agree-wrap { background: var(--rose-pale); border: 1.5px solid var(--rose-light); border-radius: 12px; padding: 16px; display: flex; align-items: flex-start; gap: 12px; margin-top: 16px; cursor: pointer; }
+  .agree-wrap input[type="checkbox"] { width: 22px; height: 22px; accent-color: var(--rose); flex-shrink: 0; margin-top: 2px; }
+  .agree-text { font-size: 13px; line-height: 1.75; color: var(--charcoal); }
+  .agree-text strong { color: var(--rose); }
+  .sig-wrap { border: 2px dashed var(--rose-light); border-radius: 12px; background: var(--rose-pale); overflow: hidden; position: relative; }
+  canvas { display: block; touch-action: none; cursor: crosshair; width: 100%; }
+  .sig-placeholder { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 13px; color: var(--rose-light); pointer-events: none; text-align: center; transition: opacity 0.3s; }
+  .sig-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
+  .btn-clear { font-size: 12px; color: var(--warm-gray); background: none; border: 1px solid var(--border); border-radius: 8px; padding: 8px 16px; cursor: pointer; font-family: 'Noto Sans JP', sans-serif; }
+  .confirm-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 14px; gap: 12px; }
+  .confirm-row:last-child { border-bottom: none; }
+  .confirm-label { color: var(--warm-gray); font-size: 12px; flex-shrink: 0; }
+  .confirm-val { font-weight: 500; text-align: right; word-break: break-all; }
+  .btn-primary { width: 100%; padding: 17px; background: var(--rose); color: var(--white); border: none; border-radius: 13px; font-family: 'Noto Sans JP', sans-serif; font-size: 16px; font-weight: 500; letter-spacing: 0.08em; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 18px rgba(232,117,106,0.28); -webkit-appearance: none; }
+  .btn-primary:active { opacity: 0.85; }
+  .btn-primary:disabled { background: #ccc; box-shadow: none; cursor: not-allowed; }
+  .btn-secondary { padding: 15px 20px; background: transparent; color: var(--warm-gray); border: 1.5px solid var(--border); border-radius: 13px; font-family: 'Noto Sans JP', sans-serif; font-size: 15px; cursor: pointer; -webkit-appearance: none; white-space: nowrap; }
+  .btn-row { position: sticky; bottom: 0; padding: 14px 20px; background: var(--white); border-top: 1px solid var(--border); z-index: 50; margin-top: 16px; }
+  .btn-row-inner { max-width: 640px; margin: 0 auto; display: flex; gap: 10px; }
+  .complete-wrap { text-align: center; padding: 40px 20px; }
+  .complete-icon { width: 72px; height: 72px; background: var(--rose-pale); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; border: 2px solid var(--rose-light); }
+  .complete-check { width: 32px; height: 32px; stroke: var(--rose); fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+  .complete-title { font-family: 'Shippori Mincho', serif; font-size: 22px; font-weight: 700; color: var(--charcoal); margin-bottom: 12px; }
+  .complete-sub { font-size: 14px; color: var(--warm-gray); line-height: 1.85; margin-bottom: 28px; }
+  .btn-download { display: block; width: 100%; padding: 17px; background: var(--rose); color: var(--white); border: none; border-radius: 13px; font-family: 'Noto Sans JP', sans-serif; font-size: 16px; font-weight: 500; letter-spacing: 0.08em; cursor: pointer; box-shadow: 0 4px 18px rgba(232,117,106,0.28); -webkit-appearance: none; margin-bottom: 12px; }
+  .btn-reset { display: block; width: 100%; padding: 15px; background: transparent; color: var(--warm-gray); border: 1.5px solid var(--border); border-radius: 13px; font-family: 'Noto Sans JP', sans-serif; font-size: 15px; cursor: pointer; -webkit-appearance: none; margin-bottom: 20px; }
+  .save-note { background: var(--rose-pale); border: 1px solid var(--rose-light); border-radius: 12px; padding: 16px; font-size: 13px; color: var(--charcoal); line-height: 1.8; text-align: left; }
+  .save-note strong { color: var(--rose); display: block; margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-brand">FRECCIA 西新井店</div>
+  <div class="header-title">利用規約同意書</div>
+</div>
+
+<div class="steps">
+  <div class="step active" id="s1"><div class="step-num">1</div><div class="step-label">ご本人確認</div></div>
+  <div class="step-line"></div>
+  <div class="step" id="s2"><div class="step-num">2</div><div class="step-label">利用規約</div></div>
+  <div class="step-line"></div>
+  <div class="step" id="s3"><div class="step-num">3</div><div class="step-label">署名・確認</div></div>
+  <div class="step-line"></div>
+  <div class="step" id="s4"><div class="step-num">4</div><div class="step-label">完了</div></div>
+</div>
+
+<!-- PAGE 1 -->
+<div class="page active" id="page1">
+  <div class="card">
+    <div class="card-title">ご本人確認</div>
+    <div class="card-desc">
+      FRECCIA 西新井店のご利用にあたり、利用規約をご確認いただき、署名にて同意をいただくためのフォームです。署名後、同意書PDFを作成・ダウンロードできます。
+    </div>
+    <div class="field">
+      <label>お名前<span class="req"> 必須</span></label>
+      <input type="text" id="name" placeholder="山田 花子" autocomplete="name">
+    </div>
+    <div class="field">
+      <label>電話番号<span class="req"> 必須</span></label>
+      <input type="tel" id="phone" placeholder="090-0000-0000">
+    </div>
+    <div class="field">
+      <label>メールアドレス<span class="req"> 必須</span></label>
+      <input type="email" id="email" placeholder="example@email.com">
+    </div>
+    <div class="field">
+      <label>同意日<span class="req"> 必須</span></label>
+      <input type="date" id="agreedate">
+    </div>
+  </div>
+  <div class="btn-row">
+    <div class="btn-row-inner">
+      <button class="btn-primary" onclick="goPage2()">次へ：利用規約を確認</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 2 -->
+<div class="page" id="page2">
+  <div class="card">
+    <div class="card-title">利用規約</div>
+    <p style="font-size:13px;color:var(--warm-gray);margin-bottom:12px;">下までスクロールして全文をお読みください。</p>
+    <div class="terms-box" id="termsBox">
+      <div class="terms-chapter">第1章 総則</div>
+      <div class="terms-article">第1条（目的）</div>
+      <div class="terms-body">本規約は、FRECCIA 西新井店（以下「当店」といいます。）が提供するサービスの利用条件を定め、会員と当店との権利義務関係を明確にすることを目的とします。</div>
+      <div class="terms-article">第2条（定義）</div>
+      <div class="terms-item">「本サービス」とは、当店が会員に提供するトレーニング、整体・ストレッチ、食事指導、コンディショニング等一切を指します。</div>
+      <div class="terms-item">「会員」とは、本規約に同意し、申込・承認を経て本サービスを利用する個人をいいます。</div>
+      <div class="terms-item">「施設等」とは、本サービスで使用するトレーニング設備、器具、更衣室その他付帯施設をいいます。</div>
+      <div class="terms-chapter">第2章 会員契約</div>
+      <div class="terms-article">第3条（入会資格）</div>
+      <div class="terms-body">1. 会員となるには、当店所定の申込みを行い、当店が承認する必要があります。</div>
+      <div class="terms-body">2. 未成年者（18歳未満）は、親権者の同意を要します。</div>
+      <div class="terms-body">3. 以下に該当する場合、入会をお断りすることがあります。</div>
+      <div class="terms-item">過去に規約違反により退会処分を受けた者</div>
+      <div class="terms-item">健康状態に問題があり運動が適さないと判断される者</div>
+      <div class="terms-item">反社会的勢力に関与している者</div>
+      <div class="terms-article">第4条（申込情報の管理）</div>
+      <div class="terms-body">1. 会員は、申込時に虚偽のない情報を提供するものとします。</div>
+      <div class="terms-body">2. 住所・連絡先等に変更があった場合は速やかに届け出る義務があります。</div>
+      <div class="terms-body">3. 会員が届け出を怠ったことで通知が届かない場合でも、当店は責任を負いません。</div>
+      <div class="terms-article">第5条（料金体系・支払方法）</div>
+      <div class="terms-body">1. 会員は、当店が定める料金表に基づき、入会金および月額料金を支払うものとします。</div>
+      <div class="terms-body">2. 月額プランは自動引落しによる毎月更新制とし、会員が前月末までに停止の申請をしない限り、翌月も継続されます。</div>
+      <div class="terms-body">3. 一度納入された料金は、医師の診断書等やむを得ない場合を除き返金いたしません。</div>
+      <div class="terms-article">第6条（チケット・有効期限）</div>
+      <div class="terms-body">1. チケットは発行日（毎月1日）から90日間有効です。</div>
+      <div class="terms-body">2. 有効期限を過ぎたチケットは自動的に消化扱いとなります。</div>
+      <div class="terms-body">3. 月内に消化できなかった分は翌月まで繰越利用が可能ですが、繰越は最大で有効期限内に限ります。</div>
+      <div class="terms-chapter">第3章 利用ルール</div>
+      <div class="terms-article">第7条（予約・キャンセル）</div>
+      <div class="terms-body">1. セッションの予約は、所定の方法（対面・LINE・電話）にて行うものとします。</div>
+      <div class="terms-body">2. キャンセルは開始時刻の24時間前までに連絡があった場合に限り振替可能です。</div>
+      <div class="terms-body">3. 当日キャンセルまたは無断欠席は1回分消化扱いとします。</div>
+      <div class="terms-body">4. 天災・交通障害・体調不良等やむを得ない事由がある場合は、証明等をもって当店が判断し柔軟に対応します。</div>
+      <div class="terms-article">第8条（遅刻）</div>
+      <div class="terms-body">1. 遅刻した場合は、残り時間でセッションを実施します。</div>
+      <div class="terms-body">2. 30分以上の遅刻は自動キャンセルとみなし、1回分を消化します。</div>
+      <div class="terms-article">第9条（施設利用における禁止事項）</div>
+      <div class="terms-body">会員は、施設等の利用に際して以下の行為を禁止します。</div>
+      <div class="terms-item">酒気を帯びた利用</div>
+      <div class="terms-item">他会員・スタッフへの迷惑行為、暴言、誹謗中傷</div>
+      <div class="terms-item">許可のない撮影・録音、営業活動、勧誘行為</div>
+      <div class="terms-item">危険物や動物の持込み</div>
+      <div class="terms-item">施設・設備を故意に損壊する行為</div>
+      <div class="terms-item">トレーナーの指示に反する行為</div>
+      <div class="terms-article">第10条（入場制限・退会処分）</div>
+      <div class="terms-body">会員が前条に違反した場合、または健康状態が適さないと判断される場合、当店は利用を制限または退会処分とすることができます。</div>
+      <div class="terms-chapter">第4章 契約解除・変更等</div>
+      <div class="terms-article">第11条（契約解除）</div>
+      <div class="terms-body">1. 会員が任意に契約を解除する場合は、30日前までに所定の方法で手続きを行うものとします。</div>
+      <div class="terms-body">2. 解約の申し出が遅れた場合、翌月分の料金が発生し、既に支払われた料金や未使用チケットは返金されません。</div>
+      <div class="terms-body">3. 解約手続きが完了した時点でサービス利用は停止されます。</div>
+      <div class="terms-article">第12条（免責事項）</div>
+      <div class="terms-body">運動の効果には個人差があり、結果を保証するものではありません。会員が施設・器具を使用中に怪我を負った場合でも、当店に重大な過失または明らかなメンテナンス不備がある場合を除き、責任を負いません。</div>
+      <div class="terms-article">第13条（個人情報の取り扱い）</div>
+      <div class="terms-body">1. 当店は、会員の個人情報を適切に取り扱い、個人情報保護法に基づき厳重に管理します。</div>
+      <div class="terms-body">2. 法令に基づく場合を除き、会員の同意なく第三者に個人情報を提供しません。</div>
+      <div class="terms-article">第14条（反社会的勢力の排除）</div>
+      <div class="terms-body">会員は、暴力団その他の反社会的勢力に属さず、また関与しないことを保証します。</div>
+      <div class="terms-article">第15条（管轄裁判所）</div>
+      <div class="terms-body">本規約に関して紛争が生じた場合は、当店所在地を管轄する地方裁判所または簡易裁判所を、第一審の専属的合意管轄裁判所とします。</div>
+      <div class="terms-version">規約バージョン：FRECCIA 西新井店 利用規約 2026年4月版</div>
+    </div>
+    <div class="scroll-progress"><div class="scroll-bar" id="scrollBar"></div></div>
+    <div class="scroll-hint">下までスクロールすると同意チェックが有効になります</div>
+    <label class="agree-wrap" for="agreeCheck">
+      <input type="checkbox" id="agreeCheck" disabled>
+      <div class="agree-text">
+        上記の利用規約を読み、内容を十分に理解したうえで同意します。<br>
+        <strong>FRECCIA 西新井店の利用規約に同意し、署名入りPDFとして記録されることに同意します。</strong>
+      </div>
+    </label>
+  </div>
+  <div class="btn-row">
+    <div class="btn-row-inner">
+      <button class="btn-secondary" onclick="goPage(1)">戻る</button>
+      <button class="btn-primary" id="btnToPage3" onclick="goPage3()" disabled>次へ：署名へ進む</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 3 -->
+<div class="page" id="page3">
+  <div class="card">
+    <div class="card-title">署名</div>
+    <p style="font-size:13px;color:var(--warm-gray);margin-bottom:12px;">下の枠内に、指またはペンで署名してください。</p>
+    <div class="sig-wrap">
+      <canvas id="sigCanvas" height="180"></canvas>
+      <div class="sig-placeholder" id="sigHint">ここに署名してください</div>
+    </div>
+    <div class="sig-actions">
+      <button class="btn-clear" onclick="clearSig()">クリア</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">入力内容の確認</div>
+    <div class="confirm-row"><span class="confirm-label">お名前</span><span class="confirm-val" id="c-name">—</span></div>
+    <div class="confirm-row"><span class="confirm-label">電話番号</span><span class="confirm-val" id="c-phone">—</span></div>
+    <div class="confirm-row"><span class="confirm-label">メールアドレス</span><span class="confirm-val" id="c-email">—</span></div>
+    <div class="confirm-row"><span class="confirm-label">同意日</span><span class="confirm-val" id="c-agreedate">—</span></div>
+    <div class="confirm-row"><span class="confirm-label">規約バージョン</span><span class="confirm-val">FRECCIA 西新井店 利用規約 2026年4月版</span></div>
+  </div>
+  <div class="btn-row">
+    <div class="btn-row-inner">
+      <button class="btn-secondary" onclick="goPage(2)">戻る</button>
+      <button class="btn-primary" id="btnGenerate" onclick="generatePDF()">PDF を作成する</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 4 -->
+<div class="page" id="page4">
+  <div class="complete-wrap">
+    <div class="complete-icon">
+      <svg class="complete-check" viewBox="0 0 32 32">
+        <polyline points="6,17 13,24 26,10"/>
+      </svg>
+    </div>
+    <div class="complete-title">同意書の作成が完了しました</div>
+    <div class="complete-sub">
+      署名入りの利用規約同意書PDFが作成されました。<br>
+      下のボタンからダウンロードしてください。
+    </div>
+    <button class="btn-download" onclick="downloadPDF()">PDF をダウンロード</button>
+    <button class="btn-reset" onclick="resetForm()">新しい同意書を作成する</button>
+    <div class="save-note">
+      <strong>iPadでの保存・共有方法</strong>
+      「PDF をダウンロード」を押すとファイルアプリに保存されます。<br>
+      その後、ファイルアプリからLINEやメールでお客様に送ることができます。
+    </div>
+  </div>
+</div>
+
+<script>
+var pdfDoc = null;
+var pdfFileName = '';
+var sigImageData = '';
+
+(function() {
+  var today = new Date();
+  var y = today.getFullYear();
+  var m = String(today.getMonth() + 1).padStart(2, '0');
+  var d = String(today.getDate()).padStart(2, '0');
+  document.getElementById('agreedate').value = y + '-' + m + '-' + d;
+})();
+
+var termsBox = document.getElementById('termsBox');
+var scrollBarEl = document.getElementById('scrollBar');
+var agreeCheck = document.getElementById('agreeCheck');
+var btnToPage3 = document.getElementById('btnToPage3');
+
+termsBox.addEventListener('scroll', function() {
+  var st = termsBox.scrollTop;
+  var sh = termsBox.scrollHeight;
+  var ch = termsBox.clientHeight;
+  var pct = sh <= ch ? 100 : (st / (sh - ch)) * 100;
+  scrollBarEl.style.width = Math.min(pct, 100) + '%';
+  if (pct >= 92) agreeCheck.disabled = false;
+});
+
+agreeCheck.addEventListener('change', function() {
+  btnToPage3.disabled = !agreeCheck.checked;
+});
+
+var canvas = document.getElementById('sigCanvas');
+var ctx = canvas.getContext('2d');
+var sigHint = document.getElementById('sigHint');
+var drawing = false, hasSig = false, dpr = 1;
+
+function initCanvas() {
+  dpr = window.devicePixelRatio || 1;
+  var displayW = canvas.parentElement.offsetWidth;
+  var displayH = 200;
+  canvas.style.width = displayW + 'px';
+  canvas.style.height = displayH + 'px';
+  canvas.width = Math.floor(displayW * dpr);
+  canvas.height = Math.floor(displayH * dpr);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.scale(dpr, dpr);
+  ctx.strokeStyle = '#2C2420';
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+}
+
+function getPos(e) {
+  var rect = canvas.getBoundingClientRect();
+  var src = e.touches ? e.touches[0] : e;
+  return { x: src.clientX - rect.left, y: src.clientY - rect.top };
+}
+
+function startDraw(e) { e.preventDefault(); drawing = true; var p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }
+function moveDraw(e) {
+  e.preventDefault();
+  if (!drawing) return;
+  var p = getPos(e);
+  ctx.lineTo(p.x, p.y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(p.x, p.y);
+  if (!hasSig) { hasSig = true; sigHint.style.opacity = '0'; }
+}
+function endDraw() { drawing = false; }
+
+canvas.addEventListener('mousedown', startDraw);
+canvas.addEventListener('mousemove', moveDraw);
+canvas.addEventListener('mouseup', endDraw);
+canvas.addEventListener('mouseleave', endDraw);
+canvas.addEventListener('touchstart', startDraw, { passive: false });
+canvas.addEventListener('touchmove', moveDraw, { passive: false });
+canvas.addEventListener('touchend', endDraw, { passive: false });
+
+function clearSig() {
+  ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
+  hasSig = false;
+  sigHint.style.opacity = '1';
+}
+
+function goPage(n) {
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  document.getElementById('page' + n).classList.add('active');
+  for (var i = 1; i <= 4; i++) {
+    var s = document.getElementById('s' + i);
+    s.classList.remove('active', 'done');
+    if (i < n) s.classList.add('done');
+    if (i === n) s.classList.add('active');
+  }
+  window.scrollTo(0, 0);
+}
+
+function goPage2() {
+  var name = document.getElementById('name').value.trim();
+  var phone = document.getElementById('phone').value.trim();
+  var email = document.getElementById('email').value.trim();
+  var agreedate = document.getElementById('agreedate').value;
+  if (!name) { alert('お名前を入力してください'); return; }
+  if (!phone) { alert('電話番号を入力してください'); return; }
+  if (!email) { alert('メールアドレスを入力してください'); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alert('メールアドレスの形式が正しくありません'); return; }
+  if (!agreedate) { alert('同意日を入力してください'); return; }
+  goPage(2);
+}
+
+function goPage3() {
+  if (!agreeCheck.checked) { alert('利用規約への同意が必要です'); return; }
+  document.getElementById('c-name').textContent = document.getElementById('name').value.trim();
+  document.getElementById('c-phone').textContent = document.getElementById('phone').value.trim();
+  document.getElementById('c-email').textContent = document.getElementById('email').value.trim();
+  document.getElementById('c-agreedate').textContent = document.getElementById('agreedate').value;
+  goPage(3);
+  setTimeout(function() { initCanvas(); }, 80);
+}
+
+function buildDoc() {
+  var name = document.getElementById('name').value.trim();
+  var phone = document.getElementById('phone').value.trim();
+  var email = document.getElementById('email').value.trim();
+  var agreedate = document.getElementById('agreedate').value;
+  var submittedAt = new Date().toLocaleString('ja-JP');
+
+  var jsPDF = window.jspdf.jsPDF;
+  var doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  var pageW = 210, margin = 20, contentW = pageW - margin * 2;
+  var y = 20;
+
+  // ヘッダー背景
+  doc.setFillColor(253, 240, 238);
+  doc.rect(0, 0, 210, 36, 'F');
+
+  // 店舗名
+  doc.setFontSize(10);
+  doc.setTextColor(140, 123, 118);
+  doc.text('FRECCIA 西新井店', pageW / 2, 13, { align: 'center' });
+
+  // タイトル
+  doc.setFontSize(20);
+  doc.setTextColor(44, 36, 32);
+  doc.text('利用規約同意書', pageW / 2, 27, { align: 'center' });
+
+  // アクセントライン
+  doc.setDrawColor(232, 117, 106);
+  doc.setLineWidth(0.5);
+  doc.line(margin, 33, pageW - margin, 33);
+
+  y = 46;
+
+  // 同意文
+  doc.setFontSize(11);
+  doc.setTextColor(44, 36, 32);
+  var consentLines = doc.splitTextToSize('私は、FRECCIA 西新井店の利用規約を確認し、内容を十分に理解したうえで同意いたします。', contentW);
+  doc.text(consentLines, margin, y);
+  y += consentLines.length * 6 + 12;
+
+  // 情報セクション
+  doc.setDrawColor(232, 117, 106);
+  doc.setLineWidth(0.3);
+  doc.line(margin, y, pageW - margin, y);
+  y += 10;
+
+  function addRow(label, value) {
+    doc.setFontSize(9); doc.setTextColor(140, 123, 118);
+    doc.text(label, margin, y);
+    doc.setFontSize(11); doc.setTextColor(44, 36, 32);
+    var lines = doc.splitTextToSize(value, contentW - 42);
+    doc.text(lines, margin + 42, y);
+    y += Math.max(lines.length * 6, 8) + 2;
+  }
+
+  addRow('お名前', name);
+  addRow('電話番号', phone);
+  addRow('メールアドレス', email);
+  addRow('同意日', agreedate);
+  addRow('規約バージョン', 'FRECCIA 西新井店 利用規約 2026年4月版');
+  addRow('作成日時', submittedAt);
+
+  y += 4;
+  doc.setDrawColor(232, 117, 106);
+  doc.line(margin, y, pageW - margin, y);
+  y += 10;
+
+  // 署名ラベル
+  doc.setFontSize(10); doc.setTextColor(140, 123, 118);
+  doc.text('署名', margin, y);
+  y += 6;
+
+  // 署名枠・画像
+  doc.setDrawColor(245, 164, 157);
+  doc.setFillColor(253, 240, 238);
+  doc.rect(margin, y, contentW, 42, 'FD');
+  if (sigImageData) {
+    doc.addImage(sigImageData, 'PNG', margin + 2, y + 2, contentW - 4, 38);
+  }
+  y += 50;
+
+  // フッター
+  doc.setDrawColor(232, 117, 106);
+  doc.setLineWidth(0.3);
+  doc.line(margin, y, pageW - margin, y);
+  y += 7;
+  doc.setFontSize(8); doc.setTextColor(140, 123, 118);
+  var footerLines = doc.splitTextToSize('本書は、FRECCIA 西新井店の利用規約にご同意いただいた内容の控えとして作成されたものです。', contentW);
+  doc.text(footerLines, margin, y);
+
+  return doc;
+}
+
+function generatePDF() {
+  if (!hasSig) { alert('署名が必要です。枠内にご署名ください。'); return; }
+
+  var btn = document.getElementById('btnGenerate');
+  btn.disabled = true;
+  btn.textContent = 'PDF作成中...';
+
+  try {
+    sigImageData = canvas.toDataURL('image/png');
+    var name = document.getElementById('name').value.trim();
+    var agreedate = document.getElementById('agreedate').value;
+    pdfFileName = 'FRECCIA_利用規約同意書_' + name + '_' + agreedate + '.pdf';
+    pdfDoc = buildDoc();
+    goPage(4);
+  } catch (err) {
+    alert('PDF作成に失敗しました：' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'PDF を作成する';
+  }
+}
+
+function downloadPDF() {
+  if (!pdfDoc) { alert('PDFが作成されていません'); return; }
+  pdfDoc.save(pdfFileName);
+}
+
+function resetForm() {
+  pdfDoc = null; pdfFileName = ''; sigImageData = '';
+  hasSig = false;
+  document.getElementById('name').value = '';
+  document.getElementById('phone').value = '';
+  document.getElementById('email').value = '';
+  var today = new Date();
+  var y = today.getFullYear();
+  var m = String(today.getMonth() + 1).padStart(2, '0');
+  var d = String(today.getDate()).padStart(2, '0');
+  document.getElementById('agreedate').value = y + '-' + m + '-' + d;
+  agreeCheck.checked = false;
+  agreeCheck.disabled = true;
+  btnToPage3.disabled = true;
+  scrollBarEl.style.width = '0%';
+  goPage(1);
+}
+</script>
+</body>
+</html>

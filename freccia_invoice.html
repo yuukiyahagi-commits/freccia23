@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FRECCIA 西新井店 請求書システム</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root {
+  --primary: #ff6e6e;
+  --primary-light: #ffe0e0;
+  --primary-pale: #fff5f5;
+  --primary-dark: #e05555;
+  --white: #ffffff;
+  --cream: #fdfaf8;
+  --charcoal: #2c2420;
+  --gray: #8c7b76;
+  --gray-light: #f5f0ee;
+  --border: rgba(255,110,110,0.18);
+  --shadow: 0 2px 16px rgba(44,36,32,0.07);
+  --radius: 14px;
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body { font-family:'Hiragino Kaku Gothic ProN','Yu Gothic','Noto Sans JP',sans-serif; background:var(--cream); color:var(--charcoal); min-height:100vh; }
+
+/* ===== COMMON ===== */
+.hidden { display:none !important; }
+.btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:12px 22px; border:none; border-radius:10px; font-size:15px; font-weight:500; cursor:pointer; transition:all 0.2s; font-family:inherit; -webkit-appearance:none; }
+.btn-primary { background:var(--primary); color:#fff; box-shadow:0 3px 12px rgba(255,110,110,0.3); }
+.btn-primary:hover { background:var(--primary-dark); transform:translateY(-1px); }
+.btn-primary:active { transform:translateY(0); }
+.btn-secondary { background:var(--white); color:var(--primary); border:1.5px solid var(--primary); }
+.btn-secondary:hover { background:var(--primary-pale); }
+.btn-danger { background:#fff0f0; color:#c0392b; border:1.5px solid #ffcccc; }
+.btn-danger:hover { background:#ffe0e0; }
+.btn-gray { background:var(--gray-light); color:var(--gray); }
+.btn-gray:hover { background:#ece5e0; }
+.btn-sm { padding:8px 14px; font-size:13px; }
+.btn-lg { padding:16px 28px; font-size:16px; width:100%; }
+.btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+.card { background:var(--white); border-radius:var(--radius); padding:24px; border:1px solid var(--border); box-shadow:var(--shadow); margin-bottom:16px; }
+.card-title { font-size:15px; font-weight:700; color:var(--primary); margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid var(--border); }
+.field { margin-bottom:16px; }
+.field label { display:block; font-size:12px; font-weight:600; color:var(--gray); margin-bottom:6px; letter-spacing:0.04em; }
+.field input, .field select, .field textarea { width:100%; padding:13px 15px; border:1.5px solid var(--border); border-radius:10px; font-size:15px; font-family:inherit; color:var(--charcoal); background:var(--cream); outline:none; transition:border-color 0.2s; -webkit-appearance:none; }
+.field input:focus, .field select:focus, .field textarea:focus { border-color:var(--primary); background:var(--white); }
+.field input[type="number"] { -moz-appearance:textfield; }
+.field input[type="number"]::-webkit-inner-spin-button { -webkit-appearance:none; }
+.field-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.field-row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+@media(max-width:480px) { .field-row { grid-template-columns:1fr; } .field-row3 { grid-template-columns:1fr; } }
+.badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+.badge-yes { background:#e8f8ee; color:#27ae60; }
+.badge-no { background:#f5f0ee; color:#8c7b76; }
+.divider { height:1px; background:var(--border); margin:16px 0; }
+.amount { font-size:16px; font-weight:700; color:var(--charcoal); }
+.amount-lg { font-size:22px; font-weight:700; color:var(--primary); }
+.text-gray { color:var(--gray); }
+.text-sm { font-size:13px; }
+.text-right { text-align:right; }
+.flex { display:flex; align-items:center; }
+.flex-between { display:flex; align-items:center; justify-content:space-between; }
+.gap8 { gap:8px; }
+.gap12 { gap:12px; }
+.mt8 { margin-top:8px; }
+.mt16 { margin-top:16px; }
+.mb8 { margin-bottom:8px; }
+.error-msg { background:#fff0f0; border:1px solid #ffcccc; border-radius:8px; padding:10px 14px; font-size:13px; color:#c0392b; margin-top:8px; }
+.success-msg { background:#e8f8ee; border:1px solid #a8d8b8; border-radius:8px; padding:10px 14px; font-size:13px; color:#27ae60; margin-top:8px; }
+
+/* ===== HEADER ===== */
+.app-header { background:var(--white); border-bottom:1px solid var(--border); padding:14px 20px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; box-shadow:0 2px 12px rgba(44,36,32,0.05); }
+.app-header-left { display:flex; flex-direction:column; }
+.app-header-brand { font-size:11px; letter-spacing:0.25em; color:var(--gray); }
+.app-header-title { font-size:17px; font-weight:700; color:var(--charcoal); }
+.app-header-right { display:flex; align-items:center; gap:10px; }
+.user-badge { background:var(--primary-pale); color:var(--primary); padding:6px 12px; border-radius:20px; font-size:13px; font-weight:600; }
+
+/* ===== LOGIN ===== */
+#loginPage { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+.login-card { background:var(--white); border-radius:20px; padding:40px 32px; width:100%; max-width:400px; box-shadow:0 8px 40px rgba(44,36,32,0.1); border:1px solid var(--border); }
+.login-logo { text-align:center; margin-bottom:28px; }
+.login-logo-brand { font-size:13px; letter-spacing:0.3em; color:var(--gray); margin-bottom:4px; }
+.login-logo-title { font-size:22px; font-weight:700; color:var(--charcoal); }
+.login-logo-sub { font-size:12px; color:var(--gray); margin-top:4px; }
+.login-accent { height:3px; background:linear-gradient(90deg,var(--primary),#ffaaaa); border-radius:2px; margin:0 auto 28px; width:60px; }
+
+/* ===== MAIN LAYOUT ===== */
+#appPage { display:none; min-height:100vh; }
+.app-content { max-width:760px; margin:0 auto; padding:20px 16px 60px; }
+
+/* ===== TABS ===== */
+.tabs { display:flex; gap:4px; background:var(--gray-light); border-radius:12px; padding:4px; margin-bottom:20px; }
+.tab-btn { flex:1; padding:10px; border:none; border-radius:9px; font-size:13px; font-weight:500; cursor:pointer; background:transparent; color:var(--gray); transition:all 0.2s; font-family:inherit; }
+.tab-btn.active { background:var(--white); color:var(--primary); box-shadow:0 1px 8px rgba(44,36,32,0.08); font-weight:700; }
+
+/* ===== SUMMARY CARDS ===== */
+.summary-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+@media(max-width:480px) { .summary-grid { grid-template-columns:1fr; } }
+.summary-card { background:var(--white); border-radius:12px; padding:16px 18px; border:1px solid var(--border); }
+.summary-card-label { font-size:11px; color:var(--gray); font-weight:600; margin-bottom:4px; letter-spacing:0.04em; }
+.summary-card-value { font-size:18px; font-weight:700; color:var(--charcoal); }
+.summary-card-value.accent { color:var(--primary); }
+.summary-total { background:linear-gradient(135deg,var(--primary),#ff9e9e); border-radius:12px; padding:20px; color:#fff; margin-bottom:16px; }
+.summary-total-label { font-size:12px; opacity:0.85; margin-bottom:4px; }
+.summary-total-value { font-size:28px; font-weight:700; }
+
+/* ===== DETAIL TABLE ===== */
+.detail-table { width:100%; border-collapse:collapse; font-size:14px; }
+.detail-table th { background:var(--primary-pale); color:var(--primary); font-weight:600; padding:10px 12px; text-align:left; font-size:12px; }
+.detail-table td { padding:10px 12px; border-bottom:1px solid var(--border); }
+.detail-table tr:last-child td { border-bottom:none; }
+.detail-table .td-right { text-align:right; font-weight:500; }
+.detail-table .td-total { font-weight:700; color:var(--primary); font-size:15px; }
+@media(max-width:480px) { .detail-table { font-size:12px; } .detail-table th, .detail-table td { padding:8px 8px; } }
+
+/* ===== ADMIN ===== */
+.trainer-list { display:flex; flex-direction:column; gap:12px; }
+.trainer-item { background:var(--white); border-radius:12px; padding:16px 18px; border:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.trainer-item-info { flex:1; min-width:0; }
+.trainer-item-name { font-size:16px; font-weight:700; color:var(--charcoal); }
+.trainer-item-meta { font-size:12px; color:var(--gray); margin-top:3px; }
+.trainer-item-actions { display:flex; gap:8px; flex-shrink:0; }
+@media(max-width:480px) { .trainer-item { flex-direction:column; align-items:flex-start; } .trainer-item-actions { width:100%; } .trainer-item-actions .btn { flex:1; } }
+
+/* ===== MODAL ===== */
+.modal-bg { display:none; position:fixed; inset:0; background:rgba(44,36,32,0.4); z-index:200; align-items:center; justify-content:center; padding:16px; }
+.modal-bg.open { display:flex; }
+.modal { background:var(--white); border-radius:20px; padding:28px 24px; width:100%; max-width:540px; max-height:90vh; overflow-y:auto; }
+.modal-title { font-size:17px; font-weight:700; color:var(--charcoal); margin-bottom:20px; padding-bottom:12px; border-bottom:1px solid var(--border); }
+.modal-actions { display:flex; gap:10px; margin-top:20px; }
+.modal-actions .btn { flex:1; }
+
+/* ===== ACTIONS BAR ===== */
+.actions-bar { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+.actions-bar .btn { flex:1; min-width:120px; }
+
+/* ===== PDF HIDDEN ===== */
+#pdfContainer { position:fixed; left:0; top:0; opacity:0; pointer-events:none; z-index:-1; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN PAGE -->
+<div id="loginPage">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-brand">FRECCIA 西新井店</div>
+      <div class="login-logo-title">請求書システム</div>
+      <div class="login-logo-sub">Trainer Invoice System</div>
+    </div>
+    <div class="login-accent"></div>
+    <div class="field">
+      <label>ユーザー選択</label>
+      <select id="loginUser">
+        <option value="">選択してください</option>
+        <option value="T001">東 嵩大</option>
+        <option value="T002">庄司 郁也</option>
+        <option value="T000">矢作 勇気</option>
+        <option value="admin">管理者</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>パスワード</label>
+      <input type="password" id="loginPass" placeholder="パスワードを入力" autocomplete="current-password">
+    </div>
+    <div id="loginError" class="error-msg hidden"></div>
+    <button class="btn btn-primary btn-lg mt16" onclick="doLogin()">ログイン</button>
+  </div>
+</div>
+
+<!-- APP PAGE -->
+<div id="appPage">
+  <div class="app-header">
+    <div class="app-header-left">
+      <div class="app-header-brand">FRECCIA 西新井店</div>
+      <div class="app-header-title" id="headerTitle">請求書システム</div>
+    </div>
+    <div class="app-header-right">
+      <div class="user-badge" id="userBadge"></div>
+      <button class="btn btn-gray btn-sm" onclick="doLogout()">ログアウト</button>
+    </div>
+  </div>
+
+  <div class="app-content">
+    <!-- TRAINER VIEW -->
+    <div id="trainerView" class="hidden">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('input')">入力</button>
+        <button class="tab-btn" onclick="switchTab('summary')">明細・PDF</button>
+      </div>
+
+      <!-- INPUT TAB -->
+      <div id="tabInput">
+        <div class="card">
+          <div class="card-title">対象期間・セッション入力</div>
+          <div class="field-row">
+            <div class="field">
+              <label>対象年</label>
+              <select id="targetYear"></select>
+            </div>
+            <div class="field">
+              <label>対象月</label>
+              <select id="targetMonth">
+                <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option>
+                <option value="4">4月</option><option value="5">5月</option><option value="6">6月</option>
+                <option value="7">7月</option><option value="8">8月</option><option value="9">9月</option>
+                <option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row3">
+            <div class="field">
+              <label>45分セッション（本）</label>
+              <input type="number" id="s45" value="0" min="0" oninput="calcAndSave()">
+            </div>
+            <div class="field">
+              <label>60分セッション（本）</label>
+              <input type="number" id="s60" value="0" min="0" oninput="calcAndSave()">
+            </div>
+            <div class="field">
+              <label>75分セッション（本）</label>
+              <input type="number" id="s75" value="0" min="0" oninput="calcAndSave()">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>研修時間（時間）</label>
+              <input type="number" id="trainingHours" value="0" min="0" step="0.5" oninput="calcAndSave()">
+            </div>
+            <div class="field">
+              <label>電車利用日数（日）</label>
+              <input type="number" id="trainDays" value="0" min="0" oninput="calcAndSave()">
+            </div>
+          </div>
+          <div class="field">
+            <label>備考</label>
+            <textarea id="note" rows="2" placeholder="必要に応じて記入" oninput="calcAndSave()" style="resize:vertical;"></textarea>
+          </div>
+          <div class="field">
+            <label>請求日</label>
+            <input type="date" id="invoiceDate">
+          </div>
+        </div>
+
+        <!-- リアルタイムサマリー -->
+        <div class="summary-total">
+          <div class="summary-total-label">ご請求金額（合計）</div>
+          <div class="summary-total-value" id="previewTotal">¥0</div>
+        </div>
+        <div class="summary-grid">
+          <div class="summary-card">
+            <div class="summary-card-label">セッション報酬計</div>
+            <div class="summary-card-value" id="previewSessions">¥0</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-card-label">研修報酬</div>
+            <div class="summary-card-value" id="previewTraining">¥0</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-card-label">交通費</div>
+            <div class="summary-card-value" id="previewTransport">¥0</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-card-label">源泉徴収税額</div>
+            <div class="summary-card-value accent" id="previewWithholding">¥0</div>
+          </div>
+        </div>
+
+        <div class="actions-bar">
+          <button class="btn btn-primary" onclick="switchTab('summary')">明細・PDFを確認</button>
+          <button class="btn btn-gray btn-sm" onclick="resetInput()">リセット</button>
+        </div>
+      </div>
+
+      <!-- SUMMARY TAB -->
+      <div id="tabSummary" class="hidden">
+        <div class="card">
+          <div class="card-title">請求書情報</div>
+          <div class="flex-between mb8">
+            <span class="text-gray text-sm">請求番号</span>
+            <span class="amount" id="invoiceNumber">—</span>
+          </div>
+          <div class="flex-between mb8">
+            <span class="text-gray text-sm">請求日</span>
+            <span id="invoiceDateDisp">—</span>
+          </div>
+          <div class="flex-between mb8">
+            <span class="text-gray text-sm">請求先</span>
+            <span>合同会社フレッチャワークス 様</span>
+          </div>
+          <div class="flex-between">
+            <span class="text-gray text-sm">件名</span>
+            <span id="invoiceSubject">—</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">明細</div>
+          <div style="overflow-x:auto;">
+            <table class="detail-table">
+              <thead>
+                <tr>
+                  <th>項目</th>
+                  <th style="text-align:right;">数量</th>
+                  <th style="text-align:right;">単価</th>
+                  <th style="text-align:right;">金額</th>
+                </tr>
+              </thead>
+              <tbody id="detailTableBody"></tbody>
+            </table>
+          </div>
+          <div class="divider"></div>
+          <div class="flex-between mb8">
+            <span class="text-gray">源泉徴収対象小計</span>
+            <span id="summSubtotal">¥0</span>
+          </div>
+          <div class="flex-between mb8">
+            <span class="text-gray">交通費</span>
+            <span id="summTransport">¥0</span>
+          </div>
+          <div class="flex-between mb8" id="withholdingRow">
+            <span class="text-gray">源泉徴収税額（10.21%）</span>
+            <span id="summWithholding" style="color:var(--primary);">¥0</span>
+          </div>
+          <div class="divider"></div>
+          <div class="flex-between">
+            <span style="font-weight:700;font-size:16px;">ご請求金額</span>
+            <span class="amount-lg" id="summTotal">¥0</span>
+          </div>
+        </div>
+
+        <div class="actions-bar">
+          <button class="btn btn-primary" onclick="generatePDF()" id="btnPDF">PDFを作成</button>
+          <button class="btn btn-secondary" onclick="saveJSON()">JSONで保存</button>
+          <button class="btn btn-secondary" onclick="document.getElementById('jsonFileInput').click()">JSONを読込</button>
+          <button class="btn btn-gray btn-sm" onclick="switchTab('input')">← 入力に戻る</button>
+        </div>
+        <input type="file" id="jsonFileInput" accept=".json" class="hidden" onchange="loadJSON(event)">
+        <div id="pdfMsg"></div>
+      </div>
+    </div>
+
+    <!-- ADMIN VIEW -->
+    <div id="adminView" class="hidden">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchAdminTab('trainers')">トレーナー管理</button>
+        <button class="tab-btn" onclick="switchAdminTab('settings')">設定</button>
+      </div>
+
+      <div id="adminTabTrainers">
+        <div class="flex-between mb8" style="flex-wrap:wrap;gap:8px;">
+          <h2 style="font-size:17px;font-weight:700;">トレーナー一覧</h2>
+          <button class="btn btn-primary btn-sm" onclick="openTrainerModal(null)">＋ 追加</button>
+        </div>
+        <div class="trainer-list" id="trainerList"></div>
+      </div>
+
+      <div id="adminTabSettings" class="hidden">
+        <div class="card">
+          <div class="card-title">データ管理</div>
+          <div class="actions-bar">
+            <button class="btn btn-secondary" onclick="adminExportJSON()">設定をJSONで書き出し</button>
+            <button class="btn btn-secondary" onclick="document.getElementById('adminJsonInput').click()">設定JSONを読み込み</button>
+            <button class="btn btn-danger" onclick="adminResetDefault()">初期設定にリセット</button>
+          </div>
+          <input type="file" id="adminJsonInput" accept=".json" class="hidden" onchange="adminLoadJSON(event)">
+          <div id="adminSettingsMsg"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PDF HIDDEN CONTAINER -->
+<div id="pdfContainer"></div>
+
+<!-- TRAINER MODAL -->
+<div class="modal-bg" id="trainerModal">
+  <div class="modal">
+    <div class="modal-title" id="trainerModalTitle">トレーナー追加</div>
+    <input type="hidden" id="editTrainerId">
+    <div class="field-row">
+      <div class="field">
+        <label>氏名</label>
+        <input type="text" id="eN" placeholder="東 嵩大">
+      </div>
+      <div class="field">
+        <label>トレーナー番号</label>
+        <input type="text" id="eTN" placeholder="T001">
+      </div>
+    </div>
+    <div class="field">
+      <label>パスワード</label>
+      <input type="text" id="ePW" placeholder="1111">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>郵便番号</label>
+        <input type="text" id="ePC" placeholder="120-0021">
+      </div>
+      <div class="field">
+        <label>電話番号</label>
+        <input type="text" id="ePH" placeholder="080-0000-0000">
+      </div>
+    </div>
+    <div class="field">
+      <label>住所</label>
+      <input type="text" id="eAD" placeholder="東京都足立区...">
+    </div>
+    <div class="field">
+      <label>メールアドレス</label>
+      <input type="email" id="eEM" placeholder="email@example.com">
+    </div>
+    <div class="field">
+      <label>インボイス登録番号</label>
+      <input type="text" id="eIV" placeholder="T0000000000000">
+    </div>
+    <div class="field-row3">
+      <div class="field">
+        <label>45分単価（円）</label>
+        <input type="number" id="eR45" value="2100" min="0">
+      </div>
+      <div class="field">
+        <label>60分単価（円）</label>
+        <input type="number" id="eR60" value="2800" min="0">
+      </div>
+      <div class="field">
+        <label>75分単価（円）</label>
+        <input type="number" id="eR75" value="3300" min="0">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>研修時給（円）</label>
+        <input type="number" id="eRTR" value="1250" min="0">
+      </div>
+      <div class="field">
+        <label>交通費単価（円/日）</label>
+        <input type="number" id="eRTP" value="178" min="0">
+      </div>
+    </div>
+    <div class="field">
+      <label>源泉徴収</label>
+      <select id="eWH">
+        <option value="true">あり（10.21%）</option>
+        <option value="false">なし</option>
+      </select>
+    </div>
+    <div id="trainerModalError" class="error-msg hidden"></div>
+    <div class="modal-actions">
+      <button class="btn btn-gray" onclick="closeTrainerModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveTrainer()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// 定数・初期データ
+// ============================================================
+var ADMIN_PASSWORD = '3852';
+var STORAGE_TRAINERS = 'freccia_trainers';
+var STORAGE_INPUT_PREFIX = 'freccia_input_';
+
+var DEFAULT_TRAINERS = [
+  {
+    id: 'T001',
+    trainerNumber: 'T001',
+    name: '東 嵩大',
+    password: '1111',
+    postalCode: '120-0021',
+    address: '東京都足立区日ノ出町８ー８ アネックスすずらん203号室',
+    phone: '080-4372-0058',
+    email: 'b19126as@gmail.com',
+    invoiceNumber: 'T4810324944389',
+    rate45: 2100,
+    rate60: 2800,
+    rate75: 3300,
+    rateTraining: 1250,
+    rateTransport: 178,
+    withholding: true
+  },
+  {
+    id: 'T002',
+    trainerNumber: 'T002',
+    name: '庄司 郁也',
+    password: '2222',
+    postalCode: '',
+    address: '',
+    phone: '',
+    email: '',
+    invoiceNumber: '',
+    rate45: 2100,
+    rate60: 2800,
+    rate75: 3300,
+    rateTraining: 1250,
+    rateTransport: 178,
+    withholding: true
+  },
+  {
+    id: 'T000',
+    trainerNumber: 'T000',
+    name: '矢作 勇気',
+    password: '3333',
+    postalCode: '',
+    address: '',
+    phone: '',
+    email: '',
+    invoiceNumber: '',
+    rate45: 2100,
+    rate60: 2800,
+    rate75: 3300,
+    rateTraining: 1250,
+    rateTransport: 178,
+    withholding: true
+  }
+];
+
+// ============================================================
+// 状態
+// ============================================================
+var currentUser = null; // 'admin' or trainer id
+var currentTrainer = null;
+var trainers = [];
+
+// ============================================================
+// ストレージ
+// ============================================================
+function loadTrainers() {
+  try {
+    var raw = localStorage.getItem(STORAGE_TRAINERS);
+    if (raw) {
+      var parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        trainers = parsed;
+        return;
+      }
+    }
+  } catch(e) {}
+  trainers = JSON.parse(JSON.stringify(DEFAULT_TRAINERS));
+}
+
+function saveTrainers() {
+  localStorage.setItem(STORAGE_TRAINERS, JSON.stringify(trainers));
+}
+
+function getTrainerById(id) {
+  return trainers.find(function(t){ return t.id === id; }) || null;
+}
+
+function loadInput(trainerId, year, month) {
+  var key = STORAGE_INPUT_PREFIX + trainerId + '_' + year + '_' + month;
+  try {
+    var raw = localStorage.getItem(key);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return null;
+}
+
+function saveInput(trainerId, year, month, data) {
+  var key = STORAGE_INPUT_PREFIX + trainerId + '_' + year + '_' + month;
+  localStorage.setItem(key, JSON.stringify(data));
+}
+
+// ============================================================
+// フォーマット
+// ============================================================
+function fmt(n) {
+  return '¥' + Math.round(n).toLocaleString('ja-JP');
+}
+function n(id) {
+  var v = parseFloat(document.getElementById(id).value);
+  return isNaN(v) || v < 0 ? 0 : v;
+}
+
+// ============================================================
+// 計算
+// ============================================================
+function calcAmounts(trainer, s45, s60, s75, training, transport) {
+  var a45 = Math.round(s45 * trainer.rate45);
+  var a60 = Math.round(s60 * trainer.rate60);
+  var a75 = Math.round(s75 * trainer.rate75);
+  var aTraining = Math.round(training * trainer.rateTraining);
+  var aTransport = Math.round(transport * trainer.rateTransport);
+  var subtotal = a45 + a60 + a75 + aTraining;
+  var withholding = trainer.withholding ? Math.floor(subtotal * 0.1021) : 0;
+  var total = subtotal + aTransport - withholding;
+  return {
+    a45: a45, a60: a60, a75: a75,
+    aTraining: aTraining, aTransport: aTransport,
+    subtotal: subtotal, withholding: withholding, total: total
+  };
+}
+
+// ============================================================
+// ログイン
+// ============================================================
+document.getElementById('loginPass').addEventListener('keydown', function(e){
+  if (e.key === 'Enter') doLogin();
+});
+
+function doLogin() {
+  var userId = document.getElementById('loginUser').value;
+  var pass = document.getElementById('loginPass').value;
+  var errEl = document.getElementById('loginError');
+  errEl.classList.add('hidden');
+
+  if (!userId) { showLoginError('ユーザーを選択してください'); return; }
+  if (!pass) { showLoginError('パスワードを入力してください'); return; }
+
+  if (userId === 'admin') {
+    if (pass !== ADMIN_PASSWORD) { showLoginError('パスワードが違います'); return; }
+    currentUser = 'admin';
+    showAdminView();
+  } else {
+    var trainer = getTrainerById(userId);
+    if (!trainer) { showLoginError('ユーザーが見つかりません'); return; }
+    if (pass !== trainer.password) { showLoginError('パスワードが違います'); return; }
+    currentUser = userId;
+    currentTrainer = trainer;
+    showTrainerView(trainer);
+  }
+}
+
+function showLoginError(msg) {
+  var el = document.getElementById('loginError');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+}
+
+function doLogout() {
+  currentUser = null;
+  currentTrainer = null;
+  document.getElementById('loginPage').style.display = 'flex';
+  document.getElementById('appPage').style.display = 'none';
+  document.getElementById('loginPass').value = '';
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginError').classList.add('hidden');
+}
+
+// ============================================================
+// トレーナー画面
+// ============================================================
+function showTrainerView(trainer) {
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('appPage').style.display = 'block';
+  document.getElementById('trainerView').classList.remove('hidden');
+  document.getElementById('adminView').classList.add('hidden');
+  document.getElementById('userBadge').textContent = trainer.name;
+  document.getElementById('headerTitle').textContent = '請求書システム';
+
+  // 年セレクト
+  var yearSel = document.getElementById('targetYear');
+  yearSel.innerHTML = '';
+  var now = new Date();
+  for (var y = now.getFullYear() - 1; y <= now.getFullYear() + 1; y++) {
+    var opt = document.createElement('option');
+    opt.value = y; opt.textContent = y + '年';
+    if (y === now.getFullYear()) opt.selected = true;
+    yearSel.appendChild(opt);
+  }
+  document.getElementById('targetMonth').value = now.getMonth() + 1;
+
+  // 今日の日付をinvoiceDateにセット
+  var td = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+  document.getElementById('invoiceDate').value = td;
+
+  yearSel.onchange = function(){ loadOrResetInput(); };
+  document.getElementById('targetMonth').onchange = function(){ loadOrResetInput(); };
+
+  loadOrResetInput();
+  switchTab('input');
+}
+
+function loadOrResetInput() {
+  if (!currentTrainer) return;
+  var year = document.getElementById('targetYear').value;
+  var month = document.getElementById('targetMonth').value;
+  var saved = loadInput(currentTrainer.id, year, month);
+  if (saved) {
+    document.getElementById('s45').value = saved.s45 || 0;
+    document.getElementById('s60').value = saved.s60 || 0;
+    document.getElementById('s75').value = saved.s75 || 0;
+    document.getElementById('trainingHours').value = saved.trainingHours || 0;
+    document.getElementById('trainDays').value = saved.trainDays || 0;
+    document.getElementById('note').value = saved.note || '';
+    if (saved.invoiceDate) document.getElementById('invoiceDate').value = saved.invoiceDate;
+  } else {
+    document.getElementById('s45').value = 0;
+    document.getElementById('s60').value = 0;
+    document.getElementById('s75').value = 0;
+    document.getElementById('trainingHours').value = 0;
+    document.getElementById('trainDays').value = 0;
+    document.getElementById('note').value = '';
+  }
+  calcAndSave();
+}
+
+function calcAndSave() {
+  if (!currentTrainer) return;
+  var trainer = currentTrainer;
+  var s45 = n('s45'), s60 = n('s60'), s75 = n('s75');
+  var training = n('trainingHours'), transport = n('trainDays');
+  var calc = calcAmounts(trainer, s45, s60, s75, training, transport);
+
+  // プレビュー更新
+  document.getElementById('previewTotal').textContent = fmt(calc.total);
+  document.getElementById('previewSessions').textContent = fmt(calc.a45 + calc.a60 + calc.a75);
+  document.getElementById('previewTraining').textContent = fmt(calc.aTraining);
+  document.getElementById('previewTransport').textContent = fmt(calc.aTransport);
+  document.getElementById('previewWithholding').textContent = fmt(calc.withholding);
+
+  // 自動保存
+  var year = document.getElementById('targetYear').value;
+  var month = document.getElementById('targetMonth').value;
+  saveInput(trainer.id, year, month, {
+    s45: s45, s60: s60, s75: s75,
+    trainingHours: training, trainDays: transport,
+    note: document.getElementById('note').value,
+    invoiceDate: document.getElementById('invoiceDate').value
+  });
+
+  updateSummaryTab(trainer, calc);
+}
+
+function updateSummaryTab(trainer, calc) {
+  var year = document.getElementById('targetYear').value;
+  var month = document.getElementById('targetMonth').value;
+  var s45 = n('s45'), s60 = n('s60'), s75 = n('s75');
+  var training = n('trainingHours'), transport = n('trainDays');
+
+  var ym = String(year) + String(month).padStart(2,'0');
+  document.getElementById('invoiceNumber').textContent = ym + '-' + trainer.trainerNumber;
+
+  var invDate = document.getElementById('invoiceDate').value || '未設定';
+  document.getElementById('invoiceDateDisp').textContent = invDate;
+  document.getElementById('invoiceSubject').textContent = 'パーソナルトレーニング' + month + '月分';
+
+  var tbody = document.getElementById('detailTableBody');
+  tbody.innerHTML = '';
+  function addRow(name, qty, unit, rate, amount) {
+    if (qty === 0) return;
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td>' + name + '</td>' +
+      '<td class="td-right">' + qty + unit + '</td>' +
+      '<td class="td-right">' + fmt(rate) + '</td>' +
+      '<td class="td-right">' + fmt(amount) + '</td>';
+    tbody.appendChild(tr);
+  }
+  addRow('パーソナルトレーニング45分', s45, '本', trainer.rate45, calc.a45);
+  addRow('パーソナルトレーニング60分', s60, '本', trainer.rate60, calc.a60);
+  addRow('パーソナルトレーニング75分', s75, '本', trainer.rate75, calc.a75);
+  addRow('研修業務', training, '時間', trainer.rateTraining, calc.aTraining);
+  addRow('電車賃', transport, '日', trainer.rateTransport, calc.aTransport);
+
+  document.getElementById('summSubtotal').textContent = fmt(calc.subtotal);
+  document.getElementById('summTransport').textContent = fmt(calc.aTransport);
+  document.getElementById('summWithholding').textContent = '- ' + fmt(calc.withholding);
+  document.getElementById('withholdingRow').style.display = trainer.withholding ? '' : 'none';
+  document.getElementById('summTotal').textContent = fmt(calc.total);
+}
+
+function resetInput() {
+  if (!confirm('入力内容をリセットしますか？')) return;
+  document.getElementById('s45').value = 0;
+  document.getElementById('s60').value = 0;
+  document.getElementById('s75').value = 0;
+  document.getElementById('trainingHours').value = 0;
+  document.getElementById('trainDays').value = 0;
+  document.getElementById('note').value = '';
+  calcAndSave();
+}
+
+function switchTab(tab) {
+  document.getElementById('tabInput').classList.toggle('hidden', tab !== 'input');
+  document.getElementById('tabSummary').classList.toggle('hidden', tab !== 'summary');
+  document.querySelectorAll('#trainerView .tab-btn').forEach(function(btn, i){
+    btn.classList.toggle('active', (i === 0 && tab === 'input') || (i === 1 && tab === 'summary'));
+  });
+  if (tab === 'summary' && currentTrainer) {
+    var s45 = n('s45'), s60 = n('s60'), s75 = n('s75');
+    var training = n('trainingHours'), transport = n('trainDays');
+    var calc = calcAmounts(currentTrainer, s45, s60, s75, training, transport);
+    updateSummaryTab(currentTrainer, calc);
+  }
+}
+
+// ============================================================
+// JSON保存・読込
+// ============================================================
+function saveJSON() {
+  if (!currentTrainer) return;
+  var year = document.getElementById('targetYear').value;
+  var month = document.getElementById('targetMonth').value;
+  var data = {
+    trainerId: currentTrainer.id,
+    trainerName: currentTrainer.name,
+    targetYear: year,
+    targetMonth: month,
+    s45: n('s45'), s60: n('s60'), s75: n('s75'),
+    trainingHours: n('trainingHours'),
+    trainDays: n('trainDays'),
+    note: document.getElementById('note').value,
+    invoiceDate: document.getElementById('invoiceDate').value
+  };
+  var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = year + '年' + String(month).padStart(2,'0') + '月_' + currentTrainer.name + '_請求書.json';
+  a.click();
+}
+
+function loadJSON(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      var data = JSON.parse(ev.target.result);
+      if (data.trainerId !== currentTrainer.id) {
+        alert('このJSONは別のトレーナーのデータです。');
+        return;
+      }
+      document.getElementById('s45').value = data.s45 || 0;
+      document.getElementById('s60').value = data.s60 || 0;
+      document.getElementById('s75').value = data.s75 || 0;
+      document.getElementById('trainingHours').value = data.trainingHours || 0;
+      document.getElementById('trainDays').value = data.trainDays || 0;
+      document.getElementById('note').value = data.note || '';
+      if (data.invoiceDate) document.getElementById('invoiceDate').value = data.invoiceDate;
+      calcAndSave();
+      alert('読み込み完了しました');
+    } catch(err) {
+      alert('JSONの読み込みに失敗しました: ' + err.message);
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+// ============================================================
+// PDF生成（html2canvas方式・文字化けなし）
+// ============================================================
+async function generatePDF() {
+  if (!currentTrainer) return;
+  if (!window.jspdf || !window.jspdf.jsPDF) { alert('PDFライブラリが読み込まれていません。インターネット接続を確認してください。'); return; }
+  if (!window.html2canvas) { alert('html2canvasが読み込まれていません。インターネット接続を確認してください。'); return; }
+
+  var btn = document.getElementById('btnPDF');
+  var msgEl = document.getElementById('pdfMsg');
+  btn.disabled = true;
+  btn.textContent = 'PDF作成中...';
+  msgEl.innerHTML = '';
+
+  try {
+    var trainer = currentTrainer;
+    var year = document.getElementById('targetYear').value;
+    var month = document.getElementById('targetMonth').value;
+    var s45 = n('s45'), s60 = n('s60'), s75 = n('s75');
+    var training = n('trainingHours'), transport = n('trainDays');
+    var calc = calcAmounts(trainer, s45, s60, s75, training, transport);
+    var invDate = document.getElementById('invoiceDate').value;
+    var note = document.getElementById('note').value;
+    var ym = String(year) + String(month).padStart(2,'0');
+    var invNum = ym + '-' + trainer.trainerNumber;
+
+    var pageHtml = buildInvoiceHTML(trainer, year, month, s45, s60, s75, training, transport, calc, invDate, invNum, note);
+
+    var jsPDF = window.jspdf.jsPDF;
+    var doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+    // ページHTML要素を非表示で作成
+    var container = document.getElementById('pdfContainer');
+    container.innerHTML = '';
+    var pageEl = document.createElement('div');
+    pageEl.style.width = '794px';
+    pageEl.style.height = '1123px';
+    pageEl.style.background = '#ffffff';
+    pageEl.style.position = 'relative';
+    pageEl.style.overflow = 'hidden';
+    pageEl.innerHTML = pageHtml;
+    container.appendChild(pageEl);
+
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+
+    var canvas = await html2canvas(pageEl, {
+      scale: 2,
+      backgroundColor: '#ffffff',
+      useCORS: true,
+      logging: false,
+      windowWidth: 794,
+      windowHeight: 1123
+    });
+
+    var imgData = canvas.toDataURL('image/jpeg', 0.97);
+    doc.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+
+    container.innerHTML = '';
+
+    var fileName = year + '年' + String(month).padStart(2,'0') + '月分請求書_' + trainer.name.replace(/\s/g,'') + '.pdf';
+
+    // iOS共有シートを優先
+    try {
+      var blob = doc.output('blob');
+      var file = new File([blob], fileName, { type: 'application/pdf' });
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: fileName });
+        msgEl.innerHTML = '<div class="success-msg">PDFを共有しました</div>';
+        return;
+      }
+    } catch(shareErr) {}
+
+    doc.save(fileName);
+    msgEl.innerHTML = '<div class="success-msg">PDFをダウンロードしました</div>';
+
+  } catch(err) {
+    msgEl.innerHTML = '<div class="error-msg">PDF作成失敗: ' + err.message + '</div>';
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'PDFを作成';
+  }
+}
+
+function buildInvoiceHTML(trainer, year, month, s45, s60, s75, training, transport, calc, invDate, invNum, note) {
+  function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function fmtN(n){ return '¥' + Math.round(n).toLocaleString('ja-JP'); }
+
+  var rows = '';
+  function addDetailRow(name, qty, unit, rate, amount) {
+    if (qty === 0) return;
+    rows += '<tr style="border-bottom:1px solid #f0e8e8;">' +
+      '<td style="padding:9px 10px;">' + esc(name) + '</td>' +
+      '<td style="padding:9px 10px;text-align:right;">' + qty + '</td>' +
+      '<td style="padding:9px 10px;text-align:center;">' + unit + '</td>' +
+      '<td style="padding:9px 10px;text-align:right;">' + fmtN(rate) + '</td>' +
+      '<td style="padding:9px 10px;text-align:right;font-weight:500;">' + fmtN(amount) + '</td>' +
+      '</tr>';
+  }
+  addDetailRow('パーソナルトレーニング45分', s45, '本', trainer.rate45, calc.a45);
+  addDetailRow('パーソナルトレーニング60分', s60, '本', trainer.rate60, calc.a60);
+  addDetailRow('パーソナルトレーニング75分', s75, '本', trainer.rate75, calc.a75);
+  addDetailRow('研修業務', training, '時間', trainer.rateTraining, calc.aTraining);
+  addDetailRow('電車賃', transport, '日', trainer.rateTransport, calc.aTransport);
+
+  return '<div style="width:794px;min-height:1123px;background:#fff;font-family:\'Hiragino Kaku Gothic ProN\',\'Yu Gothic\',\'Noto Sans JP\',sans-serif;color:#2c2420;padding:52px 60px 52px;box-sizing:border-box;">' +
+
+    // ヘッダー
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;">' +
+      '<div>' +
+        '<div style="font-size:24px;font-weight:700;color:#2c2420;margin-bottom:6px;">請 求 書</div>' +
+        '<div style="font-size:12px;color:#8c7b76;">請求番号：' + esc(invNum) + '</div>' +
+        '<div style="font-size:12px;color:#8c7b76;">請求日：' + esc(invDate) + '</div>' +
+      '</div>' +
+      '<div style="text-align:right;">' +
+        '<div style="font-size:13px;font-weight:700;color:#ff6e6e;">FRECCIA 西新井店</div>' +
+      '</div>' +
+    '</div>' +
+
+    // アクセントライン
+    '<div style="height:2px;background:linear-gradient(90deg,#ff6e6e,#ffaaaa);margin-bottom:28px;"></div>' +
+
+    // 請求先・発行元
+    '<div style="display:flex;justify-content:space-between;margin-bottom:28px;gap:20px;">' +
+      // 請求先
+      '<div style="flex:1;">' +
+        '<div style="font-size:18px;font-weight:700;margin-bottom:6px;">合同会社フレッチャワークス 御中</div>' +
+        '<div style="font-size:12px;color:#8c7b76;margin-bottom:4px;">件名：パーソナルトレーニング' + month + '月分</div>' +
+      '</div>' +
+      // 発行元
+      '<div style="font-size:12px;color:#2c2420;min-width:220px;text-align:right;">' +
+        (trainer.postalCode ? '<div>〒' + esc(trainer.postalCode) + '</div>' : '') +
+        (trainer.address ? '<div>' + esc(trainer.address) + '</div>' : '') +
+        (trainer.phone ? '<div>TEL: ' + esc(trainer.phone) + '</div>' : '') +
+        (trainer.email ? '<div>' + esc(trainer.email) + '</div>' : '') +
+        '<div style="font-weight:700;font-size:14px;margin-top:6px;">' + esc(trainer.name) + '</div>' +
+        (trainer.invoiceNumber ? '<div style="font-size:11px;color:#8c7b76;">登録番号：' + esc(trainer.invoiceNumber) + '</div>' : '') +
+      '</div>' +
+    '</div>' +
+
+    // ご請求金額
+    '<div style="background:#fff5f5;border-radius:10px;padding:18px 22px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;">' +
+      '<div style="font-size:14px;color:#8c7b76;">ご請求金額（税込）</div>' +
+      '<div style="font-size:26px;font-weight:700;color:#ff6e6e;">' + fmtN(calc.total) + '</div>' +
+    '</div>' +
+
+    // 明細
+    '<table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px;">' +
+      '<thead>' +
+        '<tr style="background:#fff5f5;">' +
+          '<th style="padding:10px;text-align:left;color:#ff6e6e;font-weight:600;font-size:12px;">項目</th>' +
+          '<th style="padding:10px;text-align:right;color:#ff6e6e;font-weight:600;font-size:12px;">数量</th>' +
+          '<th style="padding:10px;text-align:center;color:#ff6e6e;font-weight:600;font-size:12px;">単位</th>' +
+          '<th style="padding:10px;text-align:right;color:#ff6e6e;font-weight:600;font-size:12px;">単価</th>' +
+          '<th style="padding:10px;text-align:right;color:#ff6e6e;font-weight:600;font-size:12px;">金額</th>' +
+        '</tr>' +
+      '</thead>' +
+      '<tbody>' + rows + '</tbody>' +
+    '</table>' +
+
+    // 合計
+    '<div style="margin-left:auto;width:280px;">' +
+      '<div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px;border-bottom:1px solid #f0e8e8;">' +
+        '<span style="color:#8c7b76;">源泉徴収対象小計</span><span>' + fmtN(calc.subtotal) + '</span>' +
+      '</div>' +
+      '<div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px;border-bottom:1px solid #f0e8e8;">' +
+        '<span style="color:#8c7b76;">交通費</span><span>' + fmtN(calc.aTransport) + '</span>' +
+      '</div>' +
+      (trainer.withholding ? '<div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px;border-bottom:1px solid #f0e8e8;">' +
+        '<span style="color:#ff6e6e;">源泉徴収税額（10.21%）</span><span style="color:#ff6e6e;">- ' + fmtN(calc.withholding) + '</span>' +
+      '</div>' : '') +
+      '<div style="display:flex;justify-content:space-between;padding:12px 0;font-size:16px;font-weight:700;border-top:2px solid #ff6e6e;margin-top:4px;">' +
+        '<span>ご請求金額</span><span style="color:#ff6e6e;">' + fmtN(calc.total) + '</span>' +
+      '</div>' +
+    '</div>' +
+
+    // 備考
+    (note ? '<div style="margin-top:20px;padding:14px;background:#fafafa;border-radius:8px;border:1px solid #f0e8e8;">' +
+      '<div style="font-size:12px;color:#8c7b76;margin-bottom:6px;">備考</div>' +
+      '<div style="font-size:13px;">' + esc(note) + '</div>' +
+    '</div>' : '') +
+
+    // フッター
+    '<div style="position:absolute;bottom:28px;left:60px;right:60px;border-top:1px solid #f0e8e8;padding-top:10px;display:flex;justify-content:space-between;font-size:11px;color:#8c7b76;">' +
+      '<div>FRECCIA 西新井店 請求書</div>' +
+      '<div>' + esc(invNum) + '</div>' +
+    '</div>' +
+
+  '</div>';
+}
+
+// ============================================================
+// 管理者画面
+// ============================================================
+function showAdminView() {
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('appPage').style.display = 'block';
+  document.getElementById('trainerView').classList.add('hidden');
+  document.getElementById('adminView').classList.remove('hidden');
+  document.getElementById('userBadge').textContent = '管理者';
+  document.getElementById('headerTitle').textContent = '管理者画面';
+  renderTrainerList();
+  switchAdminTab('trainers');
+}
+
+function switchAdminTab(tab) {
+  document.getElementById('adminTabTrainers').classList.toggle('hidden', tab !== 'trainers');
+  document.getElementById('adminTabSettings').classList.toggle('hidden', tab !== 'settings');
+  document.querySelectorAll('#adminView .tab-btn').forEach(function(btn, i){
+    btn.classList.toggle('active', (i === 0 && tab === 'trainers') || (i === 1 && tab === 'settings'));
+  });
+}
+
+function renderTrainerList() {
+  var list = document.getElementById('trainerList');
+  list.innerHTML = '';
+  trainers.forEach(function(t) {
+    var item = document.createElement('div');
+    item.className = 'trainer-item';
+    item.innerHTML =
+      '<div class="trainer-item-info">' +
+        '<div class="trainer-item-name">' + t.name + '</div>' +
+        '<div class="trainer-item-meta">' + t.trainerNumber + ' / 45分:¥' + t.rate45 + ' 60分:¥' + t.rate60 + ' 75分:¥' + t.rate75 +
+          ' / 源泉: <span class="badge ' + (t.withholding ? 'badge-yes' : 'badge-no') + '">' + (t.withholding ? 'あり' : 'なし') + '</span></div>' +
+      '</div>' +
+      '<div class="trainer-item-actions">' +
+        '<button class="btn btn-secondary btn-sm" onclick="openTrainerModal(\'' + t.id + '\')">編集</button>' +
+        '<button class="btn btn-danger btn-sm" onclick="deleteTrainer(\'' + t.id + '\')">削除</button>' +
+      '</div>';
+    list.appendChild(item);
+  });
+}
+
+function openTrainerModal(trainerId) {
+  var modal = document.getElementById('trainerModal');
+  document.getElementById('trainerModalError').classList.add('hidden');
+
+  if (trainerId) {
+    var t = getTrainerById(trainerId);
+    if (!t) return;
+    document.getElementById('trainerModalTitle').textContent = 'トレーナー編集';
+    document.getElementById('editTrainerId').value = trainerId;
+    document.getElementById('eN').value = t.name;
+    document.getElementById('eTN').value = t.trainerNumber;
+    document.getElementById('ePW').value = t.password;
+    document.getElementById('ePC').value = t.postalCode || '';
+    document.getElementById('ePH').value = t.phone || '';
+    document.getElementById('eAD').value = t.address || '';
+    document.getElementById('eEM').value = t.email || '';
+    document.getElementById('eIV').value = t.invoiceNumber || '';
+    document.getElementById('eR45').value = t.rate45;
+    document.getElementById('eR60').value = t.rate60;
+    document.getElementById('eR75').value = t.rate75;
+    document.getElementById('eRTR').value = t.rateTraining;
+    document.getElementById('eRTP').value = t.rateTransport;
+    document.getElementById('eWH').value = t.withholding ? 'true' : 'false';
+  } else {
+    document.getElementById('trainerModalTitle').textContent = 'トレーナー追加';
+    document.getElementById('editTrainerId').value = '';
+    document.getElementById('eN').value = '';
+    document.getElementById('eTN').value = '';
+    document.getElementById('ePW').value = '';
+    document.getElementById('ePC').value = '';
+    document.getElementById('ePH').value = '';
+    document.getElementById('eAD').value = '';
+    document.getElementById('eEM').value = '';
+    document.getElementById('eIV').value = '';
+    document.getElementById('eR45').value = 2100;
+    document.getElementById('eR60').value = 2800;
+    document.getElementById('eR75').value = 3300;
+    document.getElementById('eRTR').value = 1250;
+    document.getElementById('eRTP').value = 178;
+    document.getElementById('eWH').value = 'true';
+  }
+  modal.classList.add('open');
+}
+
+function closeTrainerModal() {
+  document.getElementById('trainerModal').classList.remove('open');
+}
+
+function saveTrainer() {
+  var errEl = document.getElementById('trainerModalError');
+  errEl.classList.add('hidden');
+
+  var name = document.getElementById('eN').value.trim();
+  var tn = document.getElementById('eTN').value.trim();
+  var pw = document.getElementById('ePW').value.trim();
+
+  if (!name) { errEl.textContent = '氏名を入力してください'; errEl.classList.remove('hidden'); return; }
+  if (!tn) { errEl.textContent = 'トレーナー番号を入力してください'; errEl.classList.remove('hidden'); return; }
+  if (!pw) { errEl.textContent = 'パスワードを入力してください'; errEl.classList.remove('hidden'); return; }
+
+  var editId = document.getElementById('editTrainerId').value;
+  var newData = {
+    id: editId || tn,
+    trainerNumber: tn,
+    name: name,
+    password: pw,
+    postalCode: document.getElementById('ePC').value.trim(),
+    address: document.getElementById('eAD').value.trim(),
+    phone: document.getElementById('ePH').value.trim(),
+    email: document.getElementById('eEM').value.trim(),
+    invoiceNumber: document.getElementById('eIV').value.trim(),
+    rate45: parseInt(document.getElementById('eR45').value) || 0,
+    rate60: parseInt(document.getElementById('eR60').value) || 0,
+    rate75: parseInt(document.getElementById('eR75').value) || 0,
+    rateTraining: parseInt(document.getElementById('eRTR').value) || 0,
+    rateTransport: parseInt(document.getElementById('eRTP').value) || 0,
+    withholding: document.getElementById('eWH').value === 'true'
+  };
+
+  if (editId) {
+    var idx = trainers.findIndex(function(t){ return t.id === editId; });
+    if (idx >= 0) trainers[idx] = newData;
+  } else {
+    // 番号重複チェック
+    if (trainers.some(function(t){ return t.trainerNumber === tn; })) {
+      errEl.textContent = 'このトレーナー番号は既に使用されています';
+      errEl.classList.remove('hidden');
+      return;
+    }
+    trainers.push(newData);
+  }
+
+  saveTrainers();
+  renderTrainerList();
+  closeTrainerModal();
+}
+
+function deleteTrainer(id) {
+  var t = getTrainerById(id);
+  if (!t) return;
+  if (!confirm('「' + t.name + '」を削除しますか？この操作は元に戻せません。')) return;
+  trainers = trainers.filter(function(tr){ return tr.id !== id; });
+  saveTrainers();
+  renderTrainerList();
+}
+
+function adminExportJSON() {
+  var blob = new Blob([JSON.stringify(trainers, null, 2)], { type: 'application/json' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'freccia_trainers.json';
+  a.click();
+}
+
+function adminLoadJSON(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      var data = JSON.parse(ev.target.result);
+      if (!Array.isArray(data)) throw new Error('配列形式のJSONではありません');
+      if (data.length === 0) throw new Error('データが空です');
+      trainers = data;
+      saveTrainers();
+      renderTrainerList();
+      document.getElementById('adminSettingsMsg').innerHTML = '<div class="success-msg">読み込み完了しました（' + data.length + '件）</div>';
+    } catch(err) {
+      document.getElementById('adminSettingsMsg').innerHTML = '<div class="error-msg">読み込み失敗: ' + err.message + '</div>';
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function adminResetDefault() {
+  if (!confirm('初期設定にリセットしますか？現在のトレーナーデータはすべて削除されます。')) return;
+  trainers = JSON.parse(JSON.stringify(DEFAULT_TRAINERS));
+  saveTrainers();
+  renderTrainerList();
+  document.getElementById('adminSettingsMsg').innerHTML = '<div class="success-msg">初期設定にリセットしました</div>';
+}
+
+// ============================================================
+// 初期化
+// ============================================================
+loadTrainers();
+</script>
+</body>
+</html>

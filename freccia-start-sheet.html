@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>事前カルテ｜パーソナルジム FRECCIA 西新井店</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Shippori+Mincho:wght@500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   FRECCIA — Start Sheet
+   色をブランドに合わせて変えたい場合は、下の変数だけ書き換えてください
+   ============================================================ */
+:root{
+  --ink:        #2C2A26;   /* 本文の文字色 */
+  --ink-soft:   #6E6862;   /* 補足文の文字色 */
+  --paper:      #F7F4EF;   /* 背景 */
+  --card:       #FFFFFF;   /* カード */
+  --sage:       #6B7A64;   /* アクセント（選択色・ボタン） */
+  --sage-deep:  #55624F;   /* アクセント（押下時） */
+  --sage-tint:  #EDF1E9;   /* 選択された選択肢の背景 */
+  --sand:       #DCCBB4;   /* 矢のトラック・装飾線 */
+  --line:       #E7E1D7;   /* 罫線 */
+  --alert:      #A8564B;
+
+  --serif: "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --sans:  "Zen Kaku Gothic New", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+  --latin: "Jost", "Hiragino Sans", sans-serif;
+
+  --wrap: 620px;
+}
+
+*,*::before,*::after{ box-sizing:border-box; }
+
+html,body{
+  margin:0; padding:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;
+  overscroll-behavior:none;
+}
+body{
+  min-height:100dvh;
+  font-size:17px;
+  line-height:1.85;
+  letter-spacing:.02em;
+}
+
+/* --- ページ上部の細い砂色ライン（サイトの落ち着いた印象に合わせた装飾） --- */
+body::before{
+  content:""; position:fixed; inset:0 0 auto 0; height:3px;
+  background:linear-gradient(90deg,var(--sand),#EFE7DA);
+  z-index:50;
+}
+
+/* ============================ ヘッダー ============================ */
+.masthead{
+  position:sticky; top:0; z-index:40;
+  background:rgba(247,244,239,.92);
+  backdrop-filter:saturate(1.2) blur(8px);
+  border-bottom:1px solid var(--line);
+  padding:18px 22px 14px;
+}
+.masthead-inner{ max-width:var(--wrap); margin:0 auto; }
+
+.brand{
+  display:flex; align-items:baseline; gap:10px;
+  font-family:var(--latin); font-weight:400;
+  font-size:15px; letter-spacing:.34em; text-transform:uppercase;
+  color:var(--ink);
+}
+.brand small{
+  font-family:var(--sans); font-size:11px; letter-spacing:.1em;
+  color:var(--ink-soft); text-transform:none;
+}
+
+/* --- シグネチャー：矢（FRECCIA＝イタリア語で「矢」）が進むプログレス --- */
+.track{ margin-top:14px; display:flex; align-items:center; gap:14px; }
+.track-rail{ position:relative; flex:1; height:12px; }
+.track-rail::before{
+  content:""; position:absolute; left:0; right:0; top:50%;
+  height:1px; background:var(--sand); transform:translateY(-50%);
+}
+.track-fill{
+  position:absolute; left:0; top:50%; height:1px;
+  background:var(--sage); transform:translateY(-50%);
+  width:0; transition:width .5s cubic-bezier(.22,.9,.28,1);
+}
+.arrow{
+  position:absolute; top:50%; left:0;
+  transform:translate(-50%,-50%);
+  transition:left .5s cubic-bezier(.22,.9,.28,1);
+  color:var(--sage);
+  display:flex;
+}
+.arrow svg{ display:block; }
+.track-count{
+  font-family:var(--latin); font-size:12px; letter-spacing:.16em;
+  color:var(--ink-soft); white-space:nowrap; font-weight:400;
+}
+.masthead[data-hidden="true"] .track{ display:none; }
+
+/* ============================ 本文 ============================ */
+main{ max-width:var(--wrap); margin:0 auto; padding:34px 22px 160px; }
+
+.screen{ display:none; }
+.screen.is-active{ display:block; animation:rise .42s cubic-bezier(.22,.9,.28,1) both; }
+@keyframes rise{ from{ opacity:0; transform:translateY(14px);} to{ opacity:1; transform:none;} }
+
+.eyebrow{
+  font-family:var(--latin); font-size:11px; font-weight:400;
+  letter-spacing:.3em; text-transform:uppercase; color:var(--sage);
+  margin:0 0 14px;
+}
+h1.q-title{
+  font-family:var(--serif); font-weight:600;
+  font-size:25px; line-height:1.7; letter-spacing:.01em;
+  margin:0 0 12px;
+}
+.q-note{
+  font-size:13.5px; line-height:1.8; color:var(--ink-soft);
+  margin:0 0 26px;
+}
+.section-lead{
+  border-left:2px solid var(--sand);
+  padding:2px 0 2px 14px; margin:0 0 24px;
+  font-size:13.5px; line-height:1.85; color:var(--ink-soft);
+}
+
+/* --- 選択肢 --- */
+.opts{ display:flex; flex-direction:column; gap:9px; margin:0; padding:0; list-style:none; }
+.opt{
+  position:relative; display:flex; align-items:center; gap:14px;
+  min-height:64px; padding:14px 18px;
+  background:var(--card); border:1px solid var(--line); border-radius:14px;
+  cursor:pointer; user-select:none;
+  transition:border-color .18s ease, background-color .18s ease, transform .12s ease;
+}
+.opt:active{ transform:scale(.988); }
+.opt input{ position:absolute; opacity:0; width:1px; height:1px; }
+.opt .mark{
+  flex:0 0 auto; width:22px; height:22px;
+  border:1.5px solid #CFC7BA; background:#fff;
+  display:flex; align-items:center; justify-content:center;
+  transition:border-color .18s ease, background-color .18s ease;
+}
+.opt[data-kind="single"] .mark{ border-radius:50%; }
+.opt[data-kind="multi"] .mark{ border-radius:6px; }
+.opt .mark svg{ opacity:0; transform:scale(.6); transition:opacity .18s ease, transform .18s ease; }
+.opt .label{ font-size:16px; line-height:1.6; }
+
+.opt.is-on{ border-color:var(--sage); background:var(--sage-tint); }
+.opt.is-on .mark{ border-color:var(--sage); background:var(--sage); }
+.opt.is-on .mark svg{ opacity:1; transform:none; }
+.opt.is-locked{ opacity:.42; pointer-events:none; }
+.opt:focus-within{ outline:2px solid var(--sage); outline-offset:3px; }
+
+/* --- その他の自由記述 --- */
+.other-wrap{ margin-top:10px; display:none; }
+.other-wrap.is-open{ display:block; animation:rise .28s ease both; }
+.other-wrap input{
+  width:100%; font-family:var(--sans); font-size:16px; color:var(--ink);
+  padding:15px 18px; background:var(--card);
+  border:1px solid var(--line); border-radius:14px;
+}
+.other-wrap input:focus{ outline:none; border-color:var(--sage); }
+.other-wrap input::placeholder{ color:#B7AFA4; }
+
+.hint{
+  margin-top:14px; font-size:12.5px; color:var(--ink-soft);
+  min-height:1.4em;
+}
+.hint.is-alert{ color:var(--alert); }
+
+/* ============================ ウェルカム / 完了 ============================ */
+.hero{ padding-top:26px; text-align:left; }
+.hero .wordmark{
+  font-family:var(--latin); font-weight:300;
+  font-size:34px; letter-spacing:.42em; text-transform:uppercase;
+  margin:0 0 4px;
+}
+.hero .place{
+  font-size:11.5px; letter-spacing:.22em; color:var(--ink-soft); margin:0 0 44px;
+}
+.hero h1{
+  font-family:var(--serif); font-weight:600;
+  font-size:28px; line-height:1.85; margin:0 0 22px;
+}
+.hero p{ font-size:15px; line-height:2; color:var(--ink-soft); margin:0 0 12px; }
+.rule{ width:44px; height:1px; background:var(--sand); border:0; margin:34px 0; }
+
+.hero .meta{
+  font-family:var(--latin); font-size:12px; letter-spacing:.14em;
+  color:var(--ink-soft);
+}
+
+/* 完了画面：矢が最後まで届く */
+.done-arrow{ margin:0 0 30px; }
+.done-arrow .rail{ position:relative; height:14px; }
+.done-arrow .rail::before{
+  content:""; position:absolute; left:0; right:0; top:50%; height:1px;
+  background:var(--sage); transform:translateY(-50%);
+  transform-origin:left center; animation:draw .9s cubic-bezier(.22,.9,.28,1) both;
+}
+.done-arrow .tip{
+  position:absolute; top:50%; left:100%; transform:translate(-100%,-50%);
+  color:var(--sage); animation:tipIn .9s cubic-bezier(.22,.9,.28,1) both;
+}
+@keyframes draw{ from{ transform:translateY(-50%) scaleX(0);} to{ transform:translateY(-50%) scaleX(1);} }
+@keyframes tipIn{ from{ left:0; opacity:0;} to{ left:100%; opacity:1;} }
+
+/* ============================ フッターのボタン ============================ */
+.footbar{
+  position:fixed; left:0; right:0; bottom:0; z-index:45;
+  background:linear-gradient(180deg, rgba(247,244,239,0) 0%, rgba(247,244,239,.96) 26%, var(--paper) 100%);
+  padding:26px 22px calc(22px + env(safe-area-inset-bottom));
+}
+.footbar-inner{
+  max-width:var(--wrap); margin:0 auto;
+  display:flex; align-items:center; gap:12px;
+}
+.btn{
+  font-family:var(--sans); font-size:16px; font-weight:500; letter-spacing:.04em;
+  border:0; border-radius:999px; cursor:pointer;
+  min-height:58px; padding:0 30px;
+  transition:background-color .18s ease, opacity .18s ease, transform .12s ease;
+}
+.btn:active{ transform:scale(.985); }
+.btn-primary{ flex:1; background:var(--sage); color:#fff; }
+.btn-primary:hover{ background:var(--sage-deep); }
+.btn-primary:disabled{ background:#C6C2BA; cursor:default; }
+.btn-ghost{
+  background:transparent; color:var(--ink-soft);
+  border:1px solid var(--line); min-width:96px; padding:0 20px;
+}
+.btn:focus-visible{ outline:2px solid var(--sage); outline-offset:3px; }
+.footbar[data-hidden="true"]{ display:none; }
+
+/* ============================ 送信中 / エラー ============================ */
+.status{
+  display:flex; align-items:center; gap:12px;
+  font-size:14px; color:var(--ink-soft);
+}
+.spinner{
+  width:18px; height:18px; border-radius:50%;
+  border:2px solid var(--sand); border-top-color:var(--sage);
+  animation:spin .8s linear infinite;
+}
+@keyframes spin{ to{ transform:rotate(360deg);} }
+
+.errorbox{
+  border:1px solid #E3CFCB; background:#FBF3F1; border-radius:14px;
+  padding:18px 20px; margin:0 0 22px;
+}
+.errorbox h2{ font-family:var(--sans); font-size:15px; font-weight:700; margin:0 0 8px; color:var(--alert); }
+.errorbox p{ font-size:13.5px; line-height:1.9; color:var(--ink-soft); margin:0 0 12px; }
+.errorbox textarea{
+  width:100%; height:180px; font-family:ui-monospace,"SFMono-Regular",Menlo,monospace;
+  font-size:12px; line-height:1.7; padding:12px; border:1px solid var(--line);
+  border-radius:10px; background:#fff; color:var(--ink); resize:vertical;
+}
+
+/* ============================ 印刷・低モーション ============================ */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{ animation:none !important; transition:none !important; }
+}
+@media (min-width:768px){
+  body{ font-size:18px; }
+  h1.q-title{ font-size:28px; }
+  .hero h1{ font-size:32px; }
+  main{ padding-top:52px; }
+  .opt{ min-height:70px; }
+}
+</style>
+</head>
+<body>
+
+<header class="masthead" id="masthead" data-hidden="true">
+  <div class="masthead-inner">
+    <div class="brand">FRECCIA <small>西新井店</small></div>
+    <div class="track" aria-hidden="true">
+      <div class="track-rail">
+        <div class="track-fill" id="trackFill"></div>
+        <div class="arrow" id="arrow">
+          <svg width="26" height="12" viewBox="0 0 26 12" fill="none">
+            <path d="M0 6h20" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M18 1.5 25 6l-7 4.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          </svg>
+        </div>
+      </div>
+      <div class="track-count" id="trackCount">01 / 07</div>
+    </div>
+  </div>
+</header>
+
+<main id="main"></main>
+
+<div class="footbar" id="footbar">
+  <div class="footbar-inner" id="footbarInner"></div>
+</div>
+
+<script>
+/* ==================================================================
+   ① ここに Google Apps Script のデプロイURLを貼ってください
+   ================================================================== */
+const GAS_URL = "PASTE_YOUR_GOOGLE_APPS_SCRIPT_URL_HERE";
+
+/* ==================================================================
+   ② 担当トレーナー（増減する場合はここを編集）
+   ================================================================== */
+const TRAINERS = ["東", "庄司", "矢作"];
+
+/* ==================================================================
+   ③ 設問（文言を変えたい場合はここだけ触れば済みます）
+   ================================================================== */
+const QUESTIONS = [
+  {
+    id:"q1", kind:"multi", required:true,
+    title:'3か月後、どんな状態になっていたら<br>「来てよかった」と思えそうですか',
+    note:"あてはまるものをすべてお選びください",
+    options:[
+      "体が軽くなって、動きやすくなっている",
+      "見た目が変わって、服を選ぶのが楽しくなっている",
+      "肩や腰のつらさが減っている",
+      "疲れにくくなっている",
+      "運動が生活の一部になっている",
+      "体重や体脂肪の数字が変わっている"
+    ],
+    other:true
+  },
+  {
+    id:"q2", kind:"multi", required:false,
+    title:"トレーニング中、これは苦手・<br>できれば避けたいことはありますか",
+    note:"あてはまるものをすべてお選びください",
+    options:[
+      "大きな声で追い込まれるのは苦手",
+      "毎回体重を測るのは気が進まない",
+      "食事を細かく管理されるのはつらい",
+      "鏡で自分の姿を見るのが苦手",
+      "息が大きく上がるのがこわい",
+      "特にない"
+    ],
+    exclusive:"特にない",
+    other:true
+  },
+  {
+    id:"q3", kind:"single", required:true,
+    section:"ここからは、今後のご案内の参考のためにお聞かせください。",
+    title:'FRECCIAを「最初に」知ったきっかけを<br>教えてください',
+    note:"ご予約されたサイトではなく、はじめて見かけた場所をお選びください",
+    options:[
+      "Google検索・Googleマップ",
+      "ホットペッパービューティー",
+      "Instagram",
+      "Facebook",
+      "店舗の前を通って（看板・外観）",
+      "ご友人・知人から聞いて",
+      "当ジムの公式サイト"
+    ],
+    other:true
+  },
+  {
+    id:"q4", kind:"multi", required:false,
+    title:"ご予約の前に、FRECCIAについて<br>ご覧になったものはありますか",
+    note:"あてはまるものをすべてお選びください",
+    options:[
+      "Googleの口コミ",
+      "ホットペッパーの写真・口コミ",
+      "公式サイト",
+      "Instagram",
+      "LINE",
+      "特に見ていない"
+    ],
+    exclusive:"特に見ていない",
+    other:false
+  },
+  {
+    id:"q5", kind:"multi", required:false,
+    title:"これから通うにあたって、<br>気になっていることはありますか",
+    note:"あてはまるものをすべてお選びください",
+    options:[
+      "続けられるか",
+      "体力がついていけるか",
+      "人目が気になる",
+      "特になし"
+    ],
+    exclusive:"特になし",
+    other:true
+  },
+  {
+    id:"q6", kind:"multi", required:true, max:3,
+    title:"ご予約の決め手になったものを<br>教えてください",
+    note:"3つまでお選びいただけます",
+    options:[
+      "体験の料金",
+      "通いやすさ（場所・アクセス）",
+      "口コミの評価が高かった",
+      "写真の雰囲気（内装・清潔感）",
+      "トレーナーの経歴や雰囲気",
+      "ひとりで通えそうだった／個室である",
+      "運動が苦手でも大丈夫そうだった",
+      "予約が取りやすかった・時間が合った"
+    ],
+    other:true
+  },
+  {
+    id:"q7", kind:"single", required:true, staff:true,
+    title:"本日の担当",
+    note:"スタッフが選択します",
+    options:TRAINERS,
+    other:false
+  }
+];
+
+/* ================================================================== */
+
+const state = {
+  step:-1,                 // -1: ウェルカム / 0..n-1: 設問 / n: 送信中 / n+1: 完了
+  answers:{},              // { q1:{picked:[], other:""} ... }
+  guestName:"",
+  sending:false,
+  lastPayload:null
+};
+
+QUESTIONS.forEach(q => state.answers[q.id] = { picked:[], other:"" });
+
+// URLの ?name=山田 で氏名を受け取る（例: .../start.html?name=山田%20花子）
+(function readName(){
+  const p = new URLSearchParams(location.search);
+  state.guestName = (p.get("name") || "").trim();
+})();
+
+const $main = document.getElementById("main");
+const $foot = document.getElementById("footbar");
+const $footInner = document.getElementById("footbarInner");
+const $masthead = document.getElementById("masthead");
+const $fill = document.getElementById("trackFill");
+const $arrow = document.getElementById("arrow");
+const $count = document.getElementById("trackCount");
+
+const pad = n => String(n).padStart(2,"0");
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+
+const CHECK = '<svg width="12" height="10" viewBox="0 0 12 10" fill="none"><path d="M1 5l3.4 3.4L11 1.6" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const DOT   = '<svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="#fff"/></svg>';
+
+/* ---------------------------------- 進捗 ---------------------------------- */
+function paintProgress(){
+  const inQuestions = state.step >= 0 && state.step < QUESTIONS.length;
+  $masthead.dataset.hidden = inQuestions ? "false" : "true";
+  if(state.step === -1){ $masthead.dataset.hidden = "true"; }
+  if(!inQuestions) return;
+  const ratio = QUESTIONS.length === 1 ? 1 : state.step / (QUESTIONS.length - 1);
+  const pct = Math.round(ratio * 100);
+  $fill.style.width = pct + "%";
+  $arrow.style.left = pct + "%";
+  $count.textContent = pad(state.step + 1) + " / " + pad(QUESTIONS.length);
+}
+
+/* ---------------------------------- 描画 ---------------------------------- */
+function render(){
+  paintProgress();
+  if(state.step === -1) return renderWelcome();
+  if(state.step === QUESTIONS.length) return renderSending();
+  if(state.step === QUESTIONS.length + 1) return renderDone();
+  renderQuestion(QUESTIONS[state.step]);
+}
+
+function renderWelcome(){
+  const hello = state.guestName ? `${esc(state.guestName)} 様、` : "";
+  $main.innerHTML = `
+    <section class="screen is-active hero">
+      <p class="wordmark">Freccia</p>
+      <p class="place">NISHIARAI ・ PERSONAL GYM</p>
+      <h1>${hello}本日はお越しいただき<br>ありがとうございます。</h1>
+      <p>事前カルテの記入をお願いします。</p>
+      <p>体の状態やトレーニングの内容は、このあと担当が直接お伺いします。</p>
+      <hr class="rule">
+      <p class="meta">7 QUESTIONS ・ ABOUT 2 MIN</p>
+    </section>`;
+  $foot.dataset.hidden = "false";
+  $footInner.innerHTML = `<button class="btn btn-primary" id="go">はじめる</button>`;
+  document.getElementById("go").onclick = () => { state.step = 0; render(); window.scrollTo(0,0); };
+}
+
+function renderQuestion(q){
+  const a = state.answers[q.id];
+  const sec = q.section ? `<p class="section-lead">${esc(q.section)}</p>` : "";
+  const eyebrow = q.staff ? "STAFF" : "QUESTION " + pad(state.step + 1);
+
+  const opts = q.options.map((label,i) => `
+    <li>
+      <label class="opt" data-kind="${q.kind}" data-value="${esc(label)}">
+        <input type="${q.kind === 'single' ? 'radio' : 'checkbox'}" name="${q.id}" value="${esc(label)}">
+        <span class="mark">${q.kind === 'single' ? DOT : CHECK}</span>
+        <span class="label">${esc(label)}</span>
+      </label>
+    </li>`).join("");
+
+  const otherOpt = q.other ? `
+    <li>
+      <label class="opt" data-kind="${q.kind}" data-value="その他">
+        <input type="${q.kind === 'single' ? 'radio' : 'checkbox'}" name="${q.id}" value="その他">
+        <span class="mark">${q.kind === 'single' ? DOT : CHECK}</span>
+        <span class="label">その他</span>
+      </label>
+    </li>` : "";
+
+  const otherInput = q.other ? `
+    <div class="other-wrap" id="otherWrap">
+      <input type="text" id="otherInput" placeholder="よろしければ教えてください" value="${esc(a.other)}">
+    </div>` : "";
+
+  $main.innerHTML = `
+    <section class="screen is-active">
+      ${sec}
+      <p class="eyebrow">${eyebrow}</p>
+      <h1 class="q-title">${q.title}</h1>
+      <p class="q-note">${esc(q.note)}</p>
+      <ul class="opts" id="opts">${opts}${otherOpt}</ul>
+      ${otherInput}
+      <p class="hint" id="hint"></p>
+    </section>`;
+
+  $foot.dataset.hidden = "false";
+  const isLast = state.step === QUESTIONS.length - 1;
+  $footInner.innerHTML = `
+    <button class="btn btn-ghost" id="back">もどる</button>
+    <button class="btn btn-primary" id="next">${isLast ? "送信する" : "次へ"}</button>`;
+
+  // 復元
+  a.picked.forEach(v => {
+    const el = document.querySelector(`.opt[data-value="${CSS.escape(v)}"]`);
+    if(el){ el.classList.add("is-on"); el.querySelector("input").checked = true; }
+  });
+  syncOther(q);
+  syncLocks(q);
+
+  document.querySelectorAll("#opts .opt").forEach(el => {
+    el.addEventListener("click", ev => {
+      ev.preventDefault();
+      toggle(q, el);
+    });
+  });
+
+  const oi = document.getElementById("otherInput");
+  if(oi) oi.addEventListener("input", e => { state.answers[q.id].other = e.target.value; });
+
+  document.getElementById("back").onclick = () => { state.step--; render(); window.scrollTo(0,0); };
+  document.getElementById("next").onclick = () => advance(q);
+}
+
+function toggle(q, el){
+  const v = el.dataset.value;
+  const a = state.answers[q.id];
+
+  if(q.kind === "single"){
+    a.picked = [v];
+    document.querySelectorAll("#opts .opt").forEach(o => {
+      const on = o.dataset.value === v;
+      o.classList.toggle("is-on", on);
+      o.querySelector("input").checked = on;
+    });
+  } else {
+    const on = a.picked.includes(v);
+    if(on){
+      a.picked = a.picked.filter(x => x !== v);
+    } else {
+      if(q.exclusive && v === q.exclusive){
+        a.picked = [v];
+      } else {
+        if(q.exclusive) a.picked = a.picked.filter(x => x !== q.exclusive);
+        if(q.max && a.picked.length >= q.max) return;
+        a.picked.push(v);
+      }
+    }
+    document.querySelectorAll("#opts .opt").forEach(o => {
+      const sel = a.picked.includes(o.dataset.value);
+      o.classList.toggle("is-on", sel);
+      o.querySelector("input").checked = sel;
+    });
+  }
+  syncOther(q);
+  syncLocks(q);
+  setHint(q, "");
+}
+
+function syncOther(q){
+  if(!q.other) return;
+  const wrap = document.getElementById("otherWrap");
+  if(!wrap) return;
+  const open = state.answers[q.id].picked.includes("その他");
+  wrap.classList.toggle("is-open", open);
+  if(!open) state.answers[q.id].other = "";
+}
+
+function syncLocks(q){
+  if(!q.max) return;
+  const a = state.answers[q.id];
+  const full = a.picked.length >= q.max;
+  document.querySelectorAll("#opts .opt").forEach(o => {
+    o.classList.toggle("is-locked", full && !a.picked.includes(o.dataset.value));
+  });
+  setHint(q, full ? `${q.max}つまで選択できます。変更する場合は、選んだものをもう一度タップしてください。` : "", false);
+}
+
+function setHint(q, msg, alert = true){
+  const h = document.getElementById("hint");
+  if(!h) return;
+  h.textContent = msg;
+  h.classList.toggle("is-alert", alert && !!msg);
+}
+
+function advance(q){
+  const a = state.answers[q.id];
+  if(q.required && a.picked.length === 0){
+    setHint(q, q.staff ? "担当を選択してください。" : "ひとつ以上お選びください。");
+    return;
+  }
+  if(state.step === QUESTIONS.length - 1){
+    submit();
+  } else {
+    state.step++;
+    render();
+    window.scrollTo(0,0);
+  }
+}
+
+/* ---------------------------------- 送信 ---------------------------------- */
+function buildPayload(){
+  const out = {
+    submittedAt: new Date().toISOString(),
+    name: state.guestName,
+    userAgent: navigator.userAgent
+  };
+  QUESTIONS.forEach(q => {
+    const a = state.answers[q.id];
+    out[q.id] = a.picked.join(" / ");
+    out[q.id + "_other"] = a.other;
+  });
+  return out;
+}
+
+function renderSending(){
+  $foot.dataset.hidden = "true";
+  $main.innerHTML = `
+    <section class="screen is-active hero">
+      <div class="status"><span class="spinner"></span><span>送信しています…</span></div>
+    </section>`;
+}
+
+async function submit(){
+  if(state.sending) return;
+  state.sending = true;
+  state.lastPayload = buildPayload();
+  state.step = QUESTIONS.length;
+  render();
+
+  const ok = await postToSheet(state.lastPayload);
+  state.sending = false;
+
+  if(ok){
+    state.step = QUESTIONS.length + 1;
+    render();
+  } else {
+    renderError();
+  }
+}
+
+async function postToSheet(payload){
+  if(!GAS_URL || GAS_URL.indexOf("PASTE_YOUR") === 0) return false;
+  const body = JSON.stringify(payload);
+  // Content-Type を text/plain にすることでプリフライト(OPTIONS)を回避します
+  const opts = { method:"POST", headers:{ "Content-Type":"text/plain;charset=utf-8" }, body, redirect:"follow" };
+  try{
+    const res = await fetch(GAS_URL, opts);
+    if(res.ok) return true;
+    throw new Error("status " + res.status);
+  }catch(e){
+    // CORSで読めない環境向けのフォールバック（送信自体は届きます）
+    try{
+      await fetch(GAS_URL, Object.assign({}, opts, { mode:"no-cors" }));
+      return true;
+    }catch(e2){
+      console.error(e2);
+      return false;
+    }
+  }
+}
+
+function renderError(){
+  const lines = ["送信日時: " + new Date().toLocaleString("ja-JP"), "お名前: " + (state.guestName || "(未設定)")];
+  QUESTIONS.forEach(q => {
+    const a = state.answers[q.id];
+    const txt = a.picked.join(" / ") + (a.other ? "（その他: " + a.other + "）" : "");
+    lines.push(q.id.toUpperCase() + ": " + (txt || "-"));
+  });
+
+  $foot.dataset.hidden = "false";
+  $main.innerHTML = `
+    <section class="screen is-active hero">
+      <div class="errorbox">
+        <h2>送信できませんでした</h2>
+        <p>通信が届かなかったか、送信先の設定が完了していません。下の内容をコピーして保存し、あとで手入力してください。回答は失われていません。</p>
+        <textarea readonly id="dump">${esc(lines.join("\n"))}</textarea>
+      </div>
+    </section>`;
+  $footInner.innerHTML = `
+    <button class="btn btn-ghost" id="copy">コピー</button>
+    <button class="btn btn-primary" id="retry">もう一度送信する</button>`;
+
+  document.getElementById("copy").onclick = () => {
+    const ta = document.getElementById("dump");
+    ta.select(); ta.setSelectionRange(0, 99999);
+    try{ document.execCommand("copy"); }catch(e){}
+    document.getElementById("copy").textContent = "コピーしました";
+  };
+  document.getElementById("retry").onclick = () => submit();
+}
+
+function renderDone(){
+  $foot.dataset.hidden = "false";
+  $main.innerHTML = `
+    <section class="screen is-active hero">
+      <div class="done-arrow">
+        <div class="rail">
+          <span class="tip">
+            <svg width="26" height="12" viewBox="0 0 26 12" fill="none">
+              <path d="M18 1.5 25 6l-7 4.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </div>
+      </div>
+      <h1>ありがとうございます。</h1>
+      <p>このあと担当がお伺いします。<br>少しだけお待ちください。</p>
+      <hr class="rule">
+      <p class="meta">FRECCIA ・ NISHIARAI</p>
+    </section>`;
+  $footInner.innerHTML = `<button class="btn btn-ghost" id="reset" style="flex:1">次のお客様へ</button>`;
+  document.getElementById("reset").onclick = () => {
+    QUESTIONS.forEach(q => state.answers[q.id] = { picked:[], other:"" });
+    state.step = -1;
+    state.lastPayload = null;
+    render();
+    window.scrollTo(0,0);
+  };
+}
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,3213 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FRECCIA 西新井店 請求書システム v6</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root {
+  --primary: #ff6e6e;
+  --primary-light: #ffe0e0;
+  --primary-pale: #fff5f5;
+  --primary-dark: #e05555;
+  --white: #ffffff;
+  --cream: #fdfaf8;
+  --charcoal: #2c2420;
+  --gray: #8c7b76;
+  --gray-light: #f5f0ee;
+  --border: rgba(255,110,110,0.18);
+  --shadow: 0 2px 16px rgba(44,36,32,0.07);
+  --radius: 14px;
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body { font-family:'Hiragino Kaku Gothic ProN','Yu Gothic','Noto Sans JP',sans-serif; background:var(--cream); color:var(--charcoal); min-height:100vh; }
+
+/* ===== COMMON ===== */
+.hidden { display:none !important; }
+.btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:12px 22px; border:none; border-radius:10px; font-size:15px; font-weight:500; cursor:pointer; transition:all 0.2s; font-family:inherit; -webkit-appearance:none; }
+.btn-primary { background:var(--primary); color:#fff; box-shadow:0 3px 12px rgba(255,110,110,0.3); }
+.btn-primary:hover { background:var(--primary-dark); transform:translateY(-1px); }
+.btn-primary:active { transform:translateY(0); }
+.btn-secondary { background:var(--white); color:var(--primary); border:1.5px solid var(--primary); }
+.btn-secondary:hover { background:var(--primary-pale); }
+.btn-danger { background:#fff0f0; color:#c0392b; border:1.5px solid #ffcccc; }
+.btn-danger:hover { background:#ffe0e0; }
+.btn-gray { background:var(--gray-light); color:var(--gray); }
+.btn-gray:hover { background:#ece5e0; }
+.btn-sm { padding:8px 14px; font-size:13px; }
+.btn-lg { padding:16px 28px; font-size:16px; width:100%; }
+.btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+.card { background:var(--white); border-radius:var(--radius); padding:24px; border:1px solid var(--border); box-shadow:var(--shadow); margin-bottom:16px; }
+.card-title { font-size:15px; font-weight:700; color:var(--primary); margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid var(--border); }
+.field { margin-bottom:16px; }
+.field label { display:block; font-size:12px; font-weight:600; color:var(--gray); margin-bottom:6px; letter-spacing:0.04em; }
+.field input, .field select, .field textarea { width:100%; padding:13px 15px; border:1.5px solid var(--border); border-radius:10px; font-size:15px; font-family:inherit; color:var(--charcoal); background:var(--cream); outline:none; transition:border-color 0.2s; -webkit-appearance:none; }
+.field input:focus, .field select:focus, .field textarea:focus { border-color:var(--primary); background:var(--white); }
+.field input[type="number"] { -moz-appearance:textfield; }
+.field input[type="number"]::-webkit-inner-spin-button { -webkit-appearance:none; }
+.field-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.field-row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+@media(max-width:480px) { .field-row { grid-template-columns:1fr; } .field-row3 { grid-template-columns:1fr; } }
+.badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+.badge-yes { background:#e8f8ee; color:#27ae60; }
+.badge-no { background:#f5f0ee; color:#8c7b76; }
+.divider { height:1px; background:var(--border); margin:16px 0; }
+.amount { font-size:16px; font-weight:700; color:var(--charcoal); }
+.amount-lg { font-size:22px; font-weight:700; color:var(--primary); }
+.text-gray { color:var(--gray); }
+.text-sm { font-size:13px; }
+.text-right { text-align:right; }
+.flex { display:flex; align-items:center; }
+.flex-between { display:flex; align-items:center; justify-content:space-between; }
+.gap8 { gap:8px; }
+.gap12 { gap:12px; }
+.mt8 { margin-top:8px; }
+.mt16 { margin-top:16px; }
+.mb8 { margin-bottom:8px; }
+.error-msg { background:#fff0f0; border:1px solid #ffcccc; border-radius:8px; padding:10px 14px; font-size:13px; color:#c0392b; margin-top:8px; }
+.success-msg { background:#e8f8ee; border:1px solid #a8d8b8; border-radius:8px; padding:10px 14px; font-size:13px; color:#27ae60; margin-top:8px; }
+
+/* ===== HEADER ===== */
+.app-header { background:var(--white); border-bottom:1px solid var(--border); padding:14px 20px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; box-shadow:0 2px 12px rgba(44,36,32,0.05); }
+.app-header-left { display:flex; flex-direction:column; }
+.app-header-brand { font-size:11px; letter-spacing:0.25em; color:var(--gray); }
+.app-header-title { font-size:17px; font-weight:700; color:var(--charcoal); }
+.app-header-right { display:flex; align-items:center; gap:10px; }
+.user-badge { background:var(--primary-pale); color:var(--primary); padding:6px 12px; border-radius:20px; font-size:13px; font-weight:600; }
+
+/* ===== LOGIN ===== */
+#loginPage { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+.login-card { background:var(--white); border-radius:20px; padding:40px 32px; width:100%; max-width:400px; box-shadow:0 8px 40px rgba(44,36,32,0.1); border:1px solid var(--border); }
+.login-logo { text-align:center; margin-bottom:28px; }
+.login-logo-brand { font-size:13px; letter-spacing:0.3em; color:var(--gray); margin-bottom:4px; }
+.login-logo-title { font-size:22px; font-weight:700; color:var(--charcoal); }
+.login-logo-sub { font-size:12px; color:var(--gray); margin-top:4px; }
+.login-accent { height:3px; background:linear-gradient(90deg,var(--primary),#ffaaaa); border-radius:2px; margin:0 auto 28px; width:60px; }
+
+/* ===== MAIN LAYOUT ===== */
+#appPage { display:none; min-height:100vh; }
+.app-content { max-width:760px; margin:0 auto; padding:20px 16px 60px; }
+
+/* ===== TABS ===== */
+.tabs { display:flex; gap:4px; background:var(--gray-light); border-radius:12px; padding:4px; margin-bottom:20px; }
+.tab-btn { flex:1; padding:10px; border:none; border-radius:9px; font-size:13px; font-weight:500; cursor:pointer; background:transparent; color:var(--gray); transition:all 0.2s; font-family:inherit; }
+.tab-btn.active { background:var(--white); color:var(--primary); box-shadow:0 1px 8px rgba(44,36,32,0.08); font-weight:700; }
+
+/* ===== SUMMARY CARDS ===== */
+.summary-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+@media(max-width:480px) { .summary-grid { grid-template-columns:1fr; } }
+.summary-card { background:var(--white); border-radius:12px; padding:16px 18px; border:1px solid var(--border); }
+.summary-card-label { font-size:11px; color:var(--gray); font-weight:600; margin-bottom:4px; letter-spacing:0.04em; }
+.summary-card-value { font-size:18px; font-weight:700; color:var(--charcoal); }
+.summary-card-value.accent { color:var(--primary); }
+.summary-total { background:linear-gradient(135deg,var(--primary),#ff9e9e); border-radius:12px; padding:20px; color:#fff; margin-bottom:16px; }
+.summary-total-label { font-size:12px; opacity:0.85; margin-bottom:4px; }
+.summary-total-value { font-size:28px; font-weight:700; }
+
+/* ===== DETAIL TABLE ===== */
+.detail-table { width:100%; border-collapse:collapse; font-size:14px; }
+.detail-table th { background:var(--primary-pale); color:var(--primary); font-weight:600; padding:10px 12px; text-align:left; font-size:12px; }
+.detail-table td { padding:10px 12px; border-bottom:1px solid var(--border); }
+.detail-table tr:last-child td { border-bottom:none; }
+.detail-table .td-right { text-align:right; font-weight:500; }
+.detail-table .td-total { font-weight:700; color:var(--primary); font-size:15px; }
+@media(max-width:480px) { .detail-table { font-size:12px; } .detail-table th, .detail-table td { padding:8px 8px; } }
+
+/* ===== ADMIN ===== */
+.trainer-list { display:flex; flex-direction:column; gap:12px; }
+.trainer-item { background:var(--white); border-radius:12px; padding:16px 18px; border:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.trainer-item-info { flex:1; min-width:0; }
+.trainer-item-name { font-size:16px; font-weight:700; color:var(--charcoal); }
+.trainer-item-meta { font-size:12px; color:var(--gray); margin-top:3px; }
+.trainer-item-actions { display:flex; gap:8px; flex-shrink:0; }
+@media(max-width:480px) { .trainer-item { flex-direction:column; align-items:flex-start; } .trainer-item-actions { width:100%; } .trainer-item-actions .btn { flex:1; } }
+
+/* ===== MODAL ===== */
+.modal-bg { display:none; position:fixed; inset:0; background:rgba(44,36,32,0.4); z-index:200; align-items:center; justify-content:center; padding:16px; }
+.modal-bg.open { display:flex; }
+.modal { background:var(--white); border-radius:20px; padding:28px 24px; width:100%; max-width:540px; max-height:90vh; overflow-y:auto; }
+.modal-title { font-size:17px; font-weight:700; color:var(--charcoal); margin-bottom:20px; padding-bottom:12px; border-bottom:1px solid var(--border); }
+.modal-actions { display:flex; gap:10px; margin-top:20px; }
+.modal-actions .btn { flex:1; }
+
+/* ===== ACTIONS BAR ===== */
+.actions-bar { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+.actions-bar .btn { flex:1; min-width:120px; }
+
+/* ===== PDF HIDDEN ===== */
+#pdfContainer { position:fixed; left:0; top:0; opacity:0; pointer-events:none; z-index:-1; }
+
+/* ===== CSV IMPORT ===== */
+.drop-zone { border:2px dashed rgba(255,110,110,0.42); border-radius:12px; padding:22px 16px; text-align:center; background:var(--primary-pale); color:var(--gray); cursor:pointer; transition:all .2s; }
+.drop-zone:hover, .drop-zone.dragover { border-color:var(--primary); background:var(--primary-light); color:var(--primary-dark); }
+.drop-zone strong { color:var(--primary); }
+.notice-msg { background:#fff9e8; border:1px solid #ead49a; border-radius:8px; padding:10px 14px; font-size:13px; color:#7a5a00; margin-top:8px; }
+.info-msg { background:#eef7ff; border:1px solid #b8d8f0; border-radius:8px; padding:10px 14px; font-size:13px; color:#285b7a; margin-top:8px; }
+.csv-counts { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; margin:12px 0; }
+.csv-count { padding:10px 8px; border:1px solid var(--border); border-radius:10px; background:var(--cream); text-align:center; }
+.csv-count span { display:block; font-size:11px; color:var(--gray); }
+.csv-count strong { display:block; margin-top:3px; font-size:17px; color:var(--charcoal); }
+.csv-table-wrap { max-height:320px; overflow:auto; border:1px solid var(--border); border-radius:10px; margin-top:12px; }
+.csv-table { width:100%; border-collapse:collapse; font-size:11px; background:#fff; }
+.csv-table th { position:sticky; top:0; z-index:1; background:var(--primary-pale); color:var(--primary); padding:8px; text-align:left; white-space:nowrap; }
+.csv-table td { padding:7px 8px; border-top:1px solid var(--border); vertical-align:top; white-space:nowrap; }
+.csv-table td:last-child { white-space:normal; min-width:170px; }
+.confirm-row { display:flex; gap:8px; align-items:flex-start; margin-top:12px; padding:10px 12px; border-radius:8px; background:#fff9e8; font-size:13px; }
+.confirm-row input { margin-top:3px; flex:0 0 auto; }
+.adjustment-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:6px; margin:6px 0 12px; }
+.adjustment-chip { border-radius:8px; background:var(--gray-light); padding:7px; text-align:center; font-size:11px; color:var(--gray); }
+.adjustment-chip strong { display:block; color:var(--charcoal); font-size:13px; margin-top:2px; }
+@media(max-width:600px) { .csv-counts, .adjustment-grid { grid-template-columns:1fr 1fr; } .csv-table { min-width:780px; } }
+</style>
+</head>
+<body>
+
+<!-- LOGIN PAGE -->
+<div id="loginPage">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-brand">FRECCIA 西新井店</div>
+      <div class="login-logo-title">請求書システム</div>
+      <div class="login-logo-sub">Trainer Invoice System</div>
+    </div>
+    <div class="login-accent"></div>
+    <div class="field">
+      <label>ユーザー選択</label>
+      <select id="loginUser">
+        <option value="">選択してください</option>
+        <option value="T001">東 嵩大</option>
+        <option value="T002">庄司 郁也</option>
+        <option value="T000">矢作 勇気</option>
+        <option value="admin">管理者</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>パスワード</label>
+      <input type="password" id="loginPass" placeholder="パスワードを入力" autocomplete="current-password">
+    </div>
+    <div id="loginError" class="error-msg hidden"></div>
+    <button class="btn btn-primary btn-lg mt16" onclick="doLogin()">ログイン</button>
+  </div>
+</div>
+
+<!-- APP PAGE -->
+<div id="appPage">
+  <div class="app-header">
+    <div class="app-header-left">
+      <div class="app-header-brand">FRECCIA 西新井店</div>
+      <div class="app-header-title" id="headerTitle">請求書システム</div>
+    </div>
+    <div class="app-header-right">
+      <div class="user-badge" id="userBadge"></div>
+      <button class="btn btn-gray btn-sm" onclick="doLogout()">ログアウト</button>
+    </div>
+  </div>
+
+  <div class="app-content">
+    <!-- TRAINER VIEW -->
+    <div id="trainerView" class="hidden">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('input')">入力</button>
+        <button class="tab-btn" onclick="switchTab('summary')">明細・PDF</button>
+      </div>
+
+      <!-- INPUT TAB -->
+      <div id="tabInput">
+        <div class="card">
+          <div class="card-title">対象期間・セッション入力</div>
+          <div class="field-row">
+            <div class="field">
+              <label>対象年</label>
+              <select id="targetYear"></select>
+            </div>
+            <div class="field">
+              <label>対象月</label>
+              <select id="targetMonth">
+                <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option>
+                <option value="4">4月</option><option value="5">5月</option><option value="6">6月</option>
+                <option value="7">7月</option><option value="8">8月</option><option value="9">9月</option>
+                <option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row3">
+            <div class="field">
+              <label>通常45分（最終本数）</label>
+              <input type="number" id="s45" value="0" min="0" oninput="calcAndSave()">
+            </div>
+            <div class="field">
+              <label>通常60分（最終本数）</label>
+              <input type="number" id="s60" value="0" min="0" oninput="calcAndSave()">
+            </div>
+            <div class="field">
+              <label>通常75分（最終本数）</label>
+              <input type="number" id="s75" value="0" min="0" oninput="calcAndSave()">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>ペア45分（最終本数）</label>
+              <input type="number" id="p45" value="0" min="0" oninput="calcAndSave()">
+            </div>
+            <div class="field">
+              <label>ペア60分（最終本数）</label>
+              <input type="number" id="p60" value="0" min="0" oninput="calcAndSave()">
+            </div>
+          </div>
+          <div id="adjustmentArea" class="hidden">
+            <div class="text-sm text-gray">CSV自動集計との差分（手動調整）</div>
+            <div id="adjustmentSummary" class="adjustment-grid"></div>
+            <div class="field">
+              <label>手動調整の理由（調整がある場合は必須）</label>
+              <textarea id="adjustmentReason" rows="2" placeholder="例：9/12の45分を60分へ変更" oninput="calcAndSave()" style="resize:vertical;"></textarea>
+            </div>
+          </div>
+          <div id="formError" class="error-msg hidden"></div>
+          <div class="field-row3">
+            <div class="field">
+              <label>カウンセリング成約（本）</label>
+              <input type="number" id="cs" value="0" min="0" oninput="calcAndSave()">
+            </div>
+            <div class="field">
+              <label>カウンセリング未成約（本）</label>
+              <input type="number" id="cf" value="0" min="0" oninput="calcAndSave()">
+            </div>
+            <div class="field">
+              <label>Google口コミ獲得（件）</label>
+              <input type="number" id="gr" value="0" min="0" oninput="calcAndSave()">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>研修時間（時間）</label>
+              <input type="number" id="trainingHours" value="0" min="0" step="0.5" oninput="calcAndSave()">
+            </div>
+            <div class="field">
+              <label>電車利用（片道）</label>
+              <input type="number" id="trainDays" value="0" min="0" oninput="calcAndSave()">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>店舗コミットボーナス</label>
+              <select id="commitFee" onchange="calcAndSave()">
+                <option value="0">なし</option>
+                <option value="5000">¥5,000</option>
+                <option value="10000">¥10,000</option>
+                <option value="15000">¥15,000</option>
+                <option value="20000">¥20,000</option>
+                <option value="25000">¥25,000</option>
+                <option value="30000">¥30,000</option>
+                <option value="35000">¥35,000</option>
+                <option value="40000">¥40,000</option>
+                <option value="45000">¥45,000</option>
+                <option value="50000">¥50,000</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>特別手当</label>
+              <select id="specialFee" onchange="calcAndSave()">
+                <option value="0">なし</option>
+                <option value="500">¥500</option>
+                <option value="1000">¥1,000</option>
+                <option value="1500">¥1,500</option>
+                <option value="2000">¥2,000</option>
+                <option value="2500">¥2,500</option>
+                <option value="3000">¥3,000</option>
+                <option value="3500">¥3,500</option>
+                <option value="4000">¥4,000</option>
+                <option value="4500">¥4,500</option>
+                <option value="5000">¥5,000</option>
+                <option value="5500">¥5,500</option>
+                <option value="6000">¥6,000</option>
+                <option value="6500">¥6,500</option>
+                <option value="7000">¥7,000</option>
+                <option value="7500">¥7,500</option>
+                <option value="8000">¥8,000</option>
+                <option value="8500">¥8,500</option>
+                <option value="9000">¥9,000</option>
+                <option value="9500">¥9,500</option>
+                <option value="10000">¥10,000</option>
+                <option value="10500">¥10,500</option>
+                <option value="11000">¥11,000</option>
+                <option value="11500">¥11,500</option>
+                <option value="12000">¥12,000</option>
+                <option value="12500">¥12,500</option>
+                <option value="13000">¥13,000</option>
+                <option value="13500">¥13,500</option>
+                <option value="14000">¥14,000</option>
+                <option value="14500">¥14,500</option>
+                <option value="15000">¥15,000</option>
+                <option value="15500">¥15,500</option>
+                <option value="16000">¥16,000</option>
+                <option value="16500">¥16,500</option>
+                <option value="17000">¥17,000</option>
+                <option value="17500">¥17,500</option>
+                <option value="18000">¥18,000</option>
+                <option value="18500">¥18,500</option>
+                <option value="19000">¥19,000</option>
+                <option value="19500">¥19,500</option>
+                <option value="20000">¥20,000</option>
+                <option value="20500">¥20,500</option>
+                <option value="21000">¥21,000</option>
+                <option value="21500">¥21,500</option>
+                <option value="22000">¥22,000</option>
+                <option value="22500">¥22,500</option>
+                <option value="23000">¥23,000</option>
+                <option value="23500">¥23,500</option>
+                <option value="24000">¥24,000</option>
+                <option value="24500">¥24,500</option>
+                <option value="25000">¥25,000</option>
+                <option value="25500">¥25,500</option>
+                <option value="26000">¥26,000</option>
+                <option value="26500">¥26,500</option>
+                <option value="27000">¥27,000</option>
+                <option value="27500">¥27,500</option>
+                <option value="28000">¥28,000</option>
+                <option value="28500">¥28,500</option>
+                <option value="29000">¥29,000</option>
+                <option value="29500">¥29,500</option>
+                <option value="30000">¥30,000</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>備考</label>
+            <textarea id="note" rows="2" placeholder="必要に応じて記入" oninput="calcAndSave()" style="resize:vertical;"></textarea>
+          </div>
+          <div class="field">
+            <label>請求日</label>
+            <input type="date" id="invoiceDate" onchange="calcAndSave()">
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">サロンボードCSV一括入力</div>
+          <div id="csvDropZone" class="drop-zone" tabindex="0" role="button" aria-label="CSVファイルを選択">
+            <strong>CSVを選択</strong> またはここへドラッグ＆ドロップ
+            <div class="text-sm mt8">Shift_JIS（CP932）／UTF-8対応。解析はこのブラウザ内だけで行います。</div>
+          </div>
+          <input type="file" id="csvFileInput" accept=".csv,text/csv" class="hidden">
+          <div id="csvStatus"></div>
+          <div id="csvPreview" class="hidden mt16">
+            <div id="csvPreviewSummary"></div>
+            <div id="csvPreviewMessages"></div>
+            <div class="csv-table-wrap">
+              <table class="csv-table">
+                <thead><tr><th>予約番号</th><th>来店日</th><th>開始</th><th>メニュー</th><th>状態</th><th>判定</th></tr></thead>
+                <tbody id="csvPreviewBody"></tbody>
+              </table>
+            </div>
+            <label id="csvConfirmRow" class="confirm-row hidden">
+              <input type="checkbox" id="csvConfirm">
+              <span id="csvConfirmText">注意事項と置換内容を確認しました</span>
+            </label>
+            <div class="actions-bar mt16">
+              <button class="btn btn-primary" id="csvApplyBtn" onclick="applyCsvPreview()">この内容を反映</button>
+              <button class="btn btn-gray" onclick="cancelCsvPreview()">取り消す</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- リアルタイムサマリー -->
+        <div class="summary-total">
+          <div class="summary-total-label">ご請求金額（合計）</div>
+          <div class="summary-total-value" id="previewTotal">¥0</div>
+        </div>
+        <div class="summary-grid">
+          <div class="summary-card">
+            <div class="summary-card-label">セッション報酬計</div>
+            <div class="summary-card-value" id="previewSessions">¥0</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-card-label">研修報酬</div>
+            <div class="summary-card-value" id="previewTraining">¥0</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-card-label">カウンセリング報酬</div>
+            <div class="summary-card-value" id="previewCounsel">¥0</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-card-label">Google口コミ報酬</div>
+            <div class="summary-card-value" id="previewReview">¥0</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-card-label">店舗コミットボーナス</div>
+            <div class="summary-card-value" id="previewCommit">¥0</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-card-label">特別手当</div>
+            <div class="summary-card-value" id="previewSpecial">¥0</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-card-label">交通費</div>
+            <div class="summary-card-value" id="previewTransport">¥0</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-card-label">源泉徴収税額</div>
+            <div class="summary-card-value accent" id="previewWithholding">¥0</div>
+          </div>
+        </div>
+
+        <div class="actions-bar">
+          <button class="btn btn-primary" onclick="switchTab('summary')">明細・PDFを確認</button>
+          <button class="btn btn-gray btn-sm" onclick="resetInput()">リセット</button>
+        </div>
+      </div>
+
+      <!-- SUMMARY TAB -->
+      <div id="tabSummary" class="hidden">
+        <div class="card">
+          <div class="card-title">請求書情報</div>
+          <div class="flex-between mb8">
+            <span class="text-gray text-sm">請求番号</span>
+            <span class="amount" id="invoiceNumber">—</span>
+          </div>
+          <div class="flex-between mb8">
+            <span class="text-gray text-sm">請求日</span>
+            <span id="invoiceDateDisp">—</span>
+          </div>
+          <div class="flex-between mb8">
+            <span class="text-gray text-sm">請求先</span>
+            <span>合同会社フレッチャワークス 様</span>
+          </div>
+          <div class="flex-between">
+            <span class="text-gray text-sm">件名</span>
+            <span id="invoiceSubject">—</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">明細</div>
+          <div style="overflow-x:auto;">
+            <table class="detail-table">
+              <thead>
+                <tr>
+                  <th>項目</th>
+                  <th style="text-align:right;">数量</th>
+                  <th style="text-align:right;">単価</th>
+                  <th style="text-align:right;">金額</th>
+                </tr>
+              </thead>
+              <tbody id="detailTableBody"></tbody>
+            </table>
+          </div>
+          <div class="divider"></div>
+          <div class="flex-between mb8">
+            <span class="text-gray">源泉徴収対象小計</span>
+            <span id="summSubtotal">¥0</span>
+          </div>
+          <div class="flex-between mb8">
+            <span class="text-gray">交通費</span>
+            <span id="summTransport">¥0</span>
+          </div>
+          <div class="flex-between mb8" id="withholdingRow">
+            <span class="text-gray">源泉徴収税額（10.21%）</span>
+            <span id="summWithholding" style="color:var(--primary);">¥0</span>
+          </div>
+          <div class="divider"></div>
+          <div class="flex-between">
+            <span style="font-weight:700;font-size:16px;">ご請求金額</span>
+            <span class="amount-lg" id="summTotal">¥0</span>
+          </div>
+        </div>
+
+        <div class="actions-bar">
+          <button class="btn btn-primary" onclick="generatePDF()" id="btnPDF">PDFを作成</button>
+          <button class="btn btn-secondary" onclick="saveJSON()">JSONで保存</button>
+          <button class="btn btn-secondary" onclick="document.getElementById('jsonFileInput').click()">JSONを読込</button>
+          <button class="btn btn-gray btn-sm" onclick="switchTab('input')">← 入力に戻る</button>
+        </div>
+        <input type="file" id="jsonFileInput" accept=".json" class="hidden" onchange="loadJSON(event)">
+        <div id="pdfMsg"></div>
+      </div>
+    </div>
+
+    <!-- ADMIN VIEW -->
+    <div id="adminView" class="hidden">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchAdminTab('trainers')">トレーナー管理</button>
+        <button class="tab-btn" onclick="switchAdminTab('settings')">設定</button>
+      </div>
+
+      <div id="adminTabTrainers">
+        <div class="flex-between mb8" style="flex-wrap:wrap;gap:8px;">
+          <h2 style="font-size:17px;font-weight:700;">トレーナー一覧</h2>
+          <button class="btn btn-primary btn-sm" onclick="openTrainerModal(null)">＋ 追加</button>
+        </div>
+        <div class="trainer-list" id="trainerList"></div>
+      </div>
+
+      <div id="adminTabSettings" class="hidden">
+        <div class="card">
+          <div class="card-title">データ管理</div>
+          <div class="actions-bar">
+            <button class="btn btn-secondary" onclick="adminExportJSON()">設定をJSONで書き出し</button>
+            <button class="btn btn-secondary" onclick="document.getElementById('adminJsonInput').click()">設定JSONを読み込み</button>
+            <button class="btn btn-gray" onclick="runSelfTests(true)">セルフテストを実行</button>
+            <button class="btn btn-danger" onclick="adminResetDefault()">初期設定にリセット</button>
+          </div>
+          <input type="file" id="adminJsonInput" accept=".json" class="hidden" onchange="adminLoadJSON(event)">
+          <div id="adminSettingsMsg"></div>
+          <div id="selfTestMsg"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PDF HIDDEN CONTAINER -->
+<div id="pdfContainer"></div>
+
+<!-- TRAINER MODAL -->
+<div class="modal-bg" id="trainerModal">
+  <div class="modal">
+    <div class="modal-title" id="trainerModalTitle">トレーナー追加</div>
+    <input type="hidden" id="editTrainerId">
+    <div class="field-row">
+      <div class="field">
+        <label>氏名</label>
+        <input type="text" id="eN" placeholder="東 嵩大">
+      </div>
+      <div class="field">
+        <label>トレーナー番号</label>
+        <input type="text" id="eTN" placeholder="T001">
+      </div>
+    </div>
+    <div class="field">
+      <label>パスワード</label>
+      <input type="text" id="ePW" placeholder="1111">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>郵便番号</label>
+        <input type="text" id="ePC" placeholder="120-0021">
+      </div>
+      <div class="field">
+        <label>電話番号</label>
+        <input type="text" id="ePH" placeholder="080-0000-0000">
+      </div>
+    </div>
+    <div class="field">
+      <label>住所</label>
+      <input type="text" id="eAD" placeholder="東京都足立区...">
+    </div>
+    <div class="field">
+      <label>メールアドレス</label>
+      <input type="email" id="eEM" placeholder="email@example.com">
+    </div>
+    <div class="field">
+      <label>インボイス登録番号</label>
+      <input type="text" id="eIV" placeholder="T0000000000000">
+    </div>
+    <div class="field-row3">
+      <div class="field">
+        <label>45分単価（円）</label>
+        <input type="number" id="eR45" value="2100" min="0">
+      </div>
+      <div class="field">
+        <label>60分単価（円）</label>
+        <input type="number" id="eR60" value="2800" min="0">
+      </div>
+      <div class="field">
+        <label>75分単価（円）</label>
+        <input type="number" id="eR75" value="3300" min="0">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>ペア45分単価（円）</label>
+        <input type="number" id="eRP45" value="2800" min="0">
+      </div>
+      <div class="field">
+        <label>ペア60分単価（円）</label>
+        <input type="number" id="eRP60" value="3500" min="0">
+      </div>
+    </div>
+    <div class="field-row3">
+      <div class="field">
+        <label>カウンセリング成約単価（円）</label>
+        <input type="number" id="eRCS" value="2800" min="0">
+      </div>
+      <div class="field">
+        <label>カウンセリング未成約単価（円）</label>
+        <input type="number" id="eRCF" value="1250" min="0">
+      </div>
+      <div class="field">
+        <label>Google口コミ単価（円）</label>
+        <input type="number" id="eRGR" value="750" min="0">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>研修時給（円）</label>
+        <input type="number" id="eRTR" value="1250" min="0">
+      </div>
+      <div class="field">
+        <label>交通費単価（円/片道）</label>
+        <input type="number" id="eRTP" value="178" min="0">
+      </div>
+    </div>
+    <div class="field">
+      <label>源泉徴収</label>
+      <select id="eWH">
+        <option value="true">あり（10.21%）</option>
+        <option value="false">なし</option>
+      </select>
+    </div>
+    <div id="trainerModalError" class="error-msg hidden"></div>
+    <div class="modal-actions">
+      <button class="btn btn-gray" onclick="closeTrainerModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveTrainer()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script type="text/plain" id="v5ReferenceScript">
+// ============================================================
+// v5 reference (not executed; retained to make the v6 changes auditable)
+// 定数・初期データ
+// ============================================================
+var ADMIN_PASSWORD = '3852';
+var STORAGE_TRAINERS = 'freccia_trainers';
+var STORAGE_INPUT_PREFIX = 'freccia_input_';
+
+var DEFAULT_TRAINERS = [
+  {
+    id: 'T001',
+    trainerNumber: 'T001',
+    name: '東 嵩大',
+    password: '1111',
+    postalCode: '120-0021',
+    address: '東京都足立区日ノ出町８ー８ アネックスすずらん203号室',
+    phone: '080-4372-0058',
+    email: 'b19126as@gmail.com',
+    invoiceNumber: 'T4810324944389',
+    rate45: 2100,
+    rate60: 2800,
+    rate75: 3300,
+    rateTraining: 1250,
+    rateTransport: 178,
+    rateCounselSuccess: 2800,
+    rateCounselFail: 1250,
+    rateGoogleReview: 750,
+    withholding: true
+  },
+  {
+    id: 'T002',
+    trainerNumber: 'T002',
+    name: '庄司 郁也',
+    password: '2222',
+    postalCode: '',
+    address: '',
+    phone: '',
+    email: '',
+    invoiceNumber: '',
+    rate45: 2100,
+    rate60: 2800,
+    rate75: 3300,
+    rateTraining: 1250,
+    rateTransport: 178,
+    rateCounselSuccess: 2800,
+    rateCounselFail: 1250,
+    rateGoogleReview: 750,
+    withholding: true
+  },
+  {
+    id: 'T000',
+    trainerNumber: 'T000',
+    name: '矢作 勇気',
+    password: '3333',
+    postalCode: '',
+    address: '',
+    phone: '',
+    email: '',
+    invoiceNumber: '',
+    rate45: 2100,
+    rate60: 2800,
+    rate75: 3300,
+    rateTraining: 1250,
+    rateTransport: 178,
+    rateCounselSuccess: 2800,
+    rateCounselFail: 1250,
+    rateGoogleReview: 750,
+    withholding: true
+  }
+];
+
+// ============================================================
+// 状態
+// ============================================================
+var currentUser = null; // 'admin' or trainer id
+var currentTrainer = null;
+var trainers = [];
+
+// ============================================================
+// ストレージ
+// ============================================================
+// 新項目追加時に既存データへ単価を自動補完(NaN防止)
+function normalizeTrainer(t) {
+  if (t.rateCounselSuccess == null) t.rateCounselSuccess = 2800;
+  if (t.rateCounselFail == null) t.rateCounselFail = 1250;
+  if (t.rateGoogleReview == null) t.rateGoogleReview = 750;
+  if (t.rateGoogleReview === 500) t.rateGoogleReview = 750; // 旧単価から一括更新
+  if (t.rate45 == null) t.rate45 = 0;
+  if (t.rate60 == null) t.rate60 = 0;
+  if (t.rate75 == null) t.rate75 = 0;
+  if (t.rateTraining == null) t.rateTraining = 0;
+  if (t.rateTransport == null) t.rateTransport = 0;
+  return t;
+}
+
+function loadTrainers() {
+  try {
+    var raw = localStorage.getItem(STORAGE_TRAINERS);
+    if (raw) {
+      var parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        trainers = parsed.map(normalizeTrainer);
+        saveTrainers();
+        return;
+      }
+    }
+  } catch(e) {}
+  trainers = JSON.parse(JSON.stringify(DEFAULT_TRAINERS)).map(normalizeTrainer);
+}
+
+function saveTrainers() {
+  localStorage.setItem(STORAGE_TRAINERS, JSON.stringify(trainers));
+}
+
+function getTrainerById(id) {
+  return trainers.find(function(t){ return t.id === id; }) || null;
+}
+
+function loadInput(trainerId, year, month) {
+  var key = STORAGE_INPUT_PREFIX + trainerId + '_' + year + '_' + month;
+  try {
+    var raw = localStorage.getItem(key);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return null;
+}
+
+function saveInput(trainerId, year, month, data) {
+  var key = STORAGE_INPUT_PREFIX + trainerId + '_' + year + '_' + month;
+  localStorage.setItem(key, JSON.stringify(data));
+}
+
+// ============================================================
+// フォーマット
+// ============================================================
+function fmt(n) {
+  return '¥' + Math.round(n).toLocaleString('ja-JP');
+}
+function n(id) {
+  var v = parseFloat(document.getElementById(id).value);
+  return isNaN(v) || v < 0 ? 0 : v;
+}
+
+// ============================================================
+// 計算
+// ============================================================
+function calcAmounts(trainer, s45, s60, s75, training, transport, cs, cf, gr, commitFee, specialFee) {
+  var a45 = Math.round(s45 * trainer.rate45);
+  var a60 = Math.round(s60 * trainer.rate60);
+  var a75 = Math.round(s75 * trainer.rate75);
+  var aTraining = Math.round(training * trainer.rateTraining);
+  var aTransport = Math.round(transport * trainer.rateTransport);
+  var aCS = Math.round(cs * trainer.rateCounselSuccess);
+  var aCF = Math.round(cf * trainer.rateCounselFail);
+  var aGR = Math.round(gr * trainer.rateGoogleReview);
+  var aCommit = Math.round(commitFee);
+  var aSpecial = Math.round(specialFee || 0);
+  var subtotal = a45 + a60 + a75 + aTraining + aCS + aCF + aGR + aCommit + aSpecial;
+  var withholding = trainer.withholding ? Math.floor(subtotal * 0.1021) : 0;
+  var total = subtotal + aTransport - withholding;
+  return {
+    a45: a45, a60: a60, a75: a75,
+    aTraining: aTraining, aTransport: aTransport,
+    aCS: aCS, aCF: aCF, aGR: aGR, aCommit: aCommit, aSpecial: aSpecial,
+    subtotal: subtotal, withholding: withholding, total: total
+  };
+}
+
+// ============================================================
+// ログイン
+// ============================================================
+document.getElementById('loginPass').addEventListener('keydown', function(e){
+  if (e.key === 'Enter') doLogin();
+});
+
+function doLogin() {
+  var userId = document.getElementById('loginUser').value;
+  var pass = document.getElementById('loginPass').value;
+  var errEl = document.getElementById('loginError');
+  errEl.classList.add('hidden');
+
+  if (!userId) { showLoginError('ユーザーを選択してください'); return; }
+  if (!pass) { showLoginError('パスワードを入力してください'); return; }
+
+  if (userId === 'admin') {
+    if (pass !== ADMIN_PASSWORD) { showLoginError('パスワードが違います'); return; }
+    currentUser = 'admin';
+    showAdminView();
+  } else {
+    var trainer = getTrainerById(userId);
+    if (!trainer) { showLoginError('ユーザーが見つかりません'); return; }
+    if (pass !== trainer.password) { showLoginError('パスワードが違います'); return; }
+    currentUser = userId;
+    currentTrainer = trainer;
+    showTrainerView(trainer);
+  }
+}
+
+function showLoginError(msg) {
+  var el = document.getElementById('loginError');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+}
+
+function doLogout() {
+  currentUser = null;
+  currentTrainer = null;
+  document.getElementById('loginPage').style.display = 'flex';
+  document.getElementById('appPage').style.display = 'none';
+  document.getElementById('loginPass').value = '';
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginError').classList.add('hidden');
+}
+
+// ============================================================
+// トレーナー画面
+// ============================================================
+function showTrainerView(trainer) {
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('appPage').style.display = 'block';
+  document.getElementById('trainerView').classList.remove('hidden');
+  document.getElementById('adminView').classList.add('hidden');
+  document.getElementById('userBadge').textContent = trainer.name;
+  document.getElementById('headerTitle').textContent = '請求書システム';
+
+  // 年セレクト
+  var yearSel = document.getElementById('targetYear');
+  yearSel.innerHTML = '';
+  var now = new Date();
+  for (var y = now.getFullYear() - 1; y <= now.getFullYear() + 1; y++) {
+    var opt = document.createElement('option');
+    opt.value = y; opt.textContent = y + '年';
+    if (y === now.getFullYear()) opt.selected = true;
+    yearSel.appendChild(opt);
+  }
+  document.getElementById('targetMonth').value = now.getMonth() + 1;
+
+  // 今日の日付をinvoiceDateにセット
+  var td = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+  document.getElementById('invoiceDate').value = td;
+
+  yearSel.onchange = function(){ loadOrResetInput(); };
+  document.getElementById('targetMonth').onchange = function(){ loadOrResetInput(); };
+
+  loadOrResetInput();
+  switchTab('input');
+}
+
+function loadOrResetInput() {
+  if (!currentTrainer) return;
+  var year = document.getElementById('targetYear').value;
+  var month = document.getElementById('targetMonth').value;
+  var saved = loadInput(currentTrainer.id, year, month);
+  if (saved) {
+    document.getElementById('s45').value = saved.s45 || 0;
+    document.getElementById('s60').value = saved.s60 || 0;
+    document.getElementById('s75').value = saved.s75 || 0;
+    document.getElementById('cs').value = saved.cs || 0;
+    document.getElementById('cf').value = saved.cf || 0;
+    document.getElementById('gr').value = saved.gr || 0;
+    document.getElementById('commitFee').value = saved.commitFee || 0;
+    document.getElementById('specialFee').value = saved.specialFee || 0;
+    document.getElementById('trainingHours').value = saved.trainingHours || 0;
+    document.getElementById('trainDays').value = saved.trainDays || 0;
+    document.getElementById('note').value = saved.note || '';
+    if (saved.invoiceDate) document.getElementById('invoiceDate').value = saved.invoiceDate;
+  } else {
+    document.getElementById('s45').value = 0;
+    document.getElementById('s60').value = 0;
+    document.getElementById('s75').value = 0;
+    document.getElementById('cs').value = 0;
+    document.getElementById('cf').value = 0;
+    document.getElementById('gr').value = 0;
+    document.getElementById('commitFee').value = 0;
+    document.getElementById('specialFee').value = 0;
+    document.getElementById('trainingHours').value = 0;
+    document.getElementById('trainDays').value = 0;
+    document.getElementById('note').value = '';
+  }
+  calcAndSave();
+}
+
+function calcAndSave() {
+  if (!currentTrainer) return;
+  var trainer = currentTrainer;
+  var s45 = n('s45'), s60 = n('s60'), s75 = n('s75');
+  var training = n('trainingHours'), transport = n('trainDays');
+  var cs = n('cs'), cf = n('cf'), gr = n('gr');
+  var commitFee = parseInt(document.getElementById('commitFee').value) || 0;
+  var specialFee = parseInt(document.getElementById('specialFee').value) || 0;
+  var calc = calcAmounts(trainer, s45, s60, s75, training, transport, cs, cf, gr, commitFee, specialFee);
+
+  // プレビュー更新
+  document.getElementById('previewTotal').textContent = fmt(calc.total);
+  document.getElementById('previewSessions').textContent = fmt(calc.a45 + calc.a60 + calc.a75);
+  document.getElementById('previewTraining').textContent = fmt(calc.aTraining);
+  document.getElementById('previewCounsel').textContent = fmt(calc.aCS + calc.aCF);
+  document.getElementById('previewReview').textContent = fmt(calc.aGR);
+  document.getElementById('previewCommit').textContent = fmt(calc.aCommit);
+  document.getElementById('previewSpecial').textContent = fmt(calc.aSpecial);
+  document.getElementById('previewTransport').textContent = fmt(calc.aTransport);
+  document.getElementById('previewWithholding').textContent = fmt(calc.withholding);
+
+  // 自動保存
+  var year = document.getElementById('targetYear').value;
+  var month = document.getElementById('targetMonth').value;
+  saveInput(trainer.id, year, month, {
+    s45: s45, s60: s60, s75: s75,
+    cs: cs, cf: cf, gr: gr, commitFee: commitFee, specialFee: specialFee,
+    trainingHours: training, trainDays: transport,
+    note: document.getElementById('note').value,
+    invoiceDate: document.getElementById('invoiceDate').value
+  });
+
+  updateSummaryTab(trainer, calc);
+}
+
+function updateSummaryTab(trainer, calc) {
+  var year = document.getElementById('targetYear').value;
+  var month = document.getElementById('targetMonth').value;
+  var s45 = n('s45'), s60 = n('s60'), s75 = n('s75');
+  var training = n('trainingHours'), transport = n('trainDays');
+  var cs = n('cs'), cf = n('cf'), gr = n('gr');
+  var commitFee = parseInt(document.getElementById('commitFee').value) || 0;
+  var specialFee = parseInt(document.getElementById('specialFee').value) || 0;
+
+  var ym = String(year) + String(month).padStart(2,'0');
+  document.getElementById('invoiceNumber').textContent = ym + '-' + trainer.trainerNumber;
+
+  var invDate = document.getElementById('invoiceDate').value || '未設定';
+  document.getElementById('invoiceDateDisp').textContent = invDate;
+  document.getElementById('invoiceSubject').textContent = 'パーソナルトレーニング' + month + '月分';
+
+  var tbody = document.getElementById('detailTableBody');
+  tbody.innerHTML = '';
+  function addRow(name, qty, unit, rate, amount) {
+    if (qty === 0) return;
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td>' + name + '</td>' +
+      '<td class="td-right">' + qty + unit + '</td>' +
+      '<td class="td-right">' + fmt(rate) + '</td>' +
+      '<td class="td-right">' + fmt(amount) + '</td>';
+    tbody.appendChild(tr);
+  }
+  addRow('パーソナルトレーニング45分', s45, '本', trainer.rate45, calc.a45);
+  addRow('パーソナルトレーニング60分', s60, '本', trainer.rate60, calc.a60);
+  addRow('パーソナルトレーニング75分', s75, '本', trainer.rate75, calc.a75);
+  addRow('カウンセリング成約', cs, '本', trainer.rateCounselSuccess, calc.aCS);
+  addRow('カウンセリング未成約', cf, '本', trainer.rateCounselFail, calc.aCF);
+  addRow('Google口コミ獲得', gr, '件', trainer.rateGoogleReview, calc.aGR);
+  addRow('研修業務', training, '時間', trainer.rateTraining, calc.aTraining);
+  addRow('電車賃', transport, '片道', trainer.rateTransport, calc.aTransport);
+  if (commitFee > 0) addRow('店舗コミットボーナス', 1, '回', commitFee, calc.aCommit);
+  if (specialFee > 0) addRow('特別手当', 1, '回', specialFee, calc.aSpecial);
+
+  document.getElementById('summSubtotal').textContent = fmt(calc.subtotal);
+  document.getElementById('summTransport').textContent = fmt(calc.aTransport);
+  document.getElementById('summWithholding').textContent = '- ' + fmt(calc.withholding);
+  document.getElementById('withholdingRow').style.display = trainer.withholding ? '' : 'none';
+  document.getElementById('summTotal').textContent = fmt(calc.total);
+}
+
+function resetInput() {
+  if (!confirm('入力内容をリセットしますか？')) return;
+  document.getElementById('s45').value = 0;
+  document.getElementById('s60').value = 0;
+  document.getElementById('s75').value = 0;
+  document.getElementById('cs').value = 0;
+  document.getElementById('cf').value = 0;
+  document.getElementById('gr').value = 0;
+  document.getElementById('commitFee').value = 0;
+  document.getElementById('specialFee').value = 0;
+  document.getElementById('trainingHours').value = 0;
+  document.getElementById('trainDays').value = 0;
+  document.getElementById('note').value = '';
+  calcAndSave();
+}
+
+function switchTab(tab) {
+  document.getElementById('tabInput').classList.toggle('hidden', tab !== 'input');
+  document.getElementById('tabSummary').classList.toggle('hidden', tab !== 'summary');
+  document.querySelectorAll('#trainerView .tab-btn').forEach(function(btn, i){
+    btn.classList.toggle('active', (i === 0 && tab === 'input') || (i === 1 && tab === 'summary'));
+  });
+  if (tab === 'summary' && currentTrainer) {
+    var s45 = n('s45'), s60 = n('s60'), s75 = n('s75');
+    var training = n('trainingHours'), transport = n('trainDays');
+    var cs = n('cs'), cf = n('cf'), gr = n('gr');
+    var commitFee = parseInt(document.getElementById('commitFee').value) || 0;
+    var specialFee = parseInt(document.getElementById('specialFee').value) || 0;
+    var calc = calcAmounts(currentTrainer, s45, s60, s75, training, transport, cs, cf, gr, commitFee, specialFee);
+    updateSummaryTab(currentTrainer, calc);
+  }
+}
+
+// ============================================================
+// JSON保存・読込
+// ============================================================
+function saveJSON() {
+  if (!currentTrainer) return;
+  var year = document.getElementById('targetYear').value;
+  var month = document.getElementById('targetMonth').value;
+  var data = {
+    trainerId: currentTrainer.id,
+    trainerName: currentTrainer.name,
+    targetYear: year,
+    targetMonth: month,
+    s45: n('s45'), s60: n('s60'), s75: n('s75'),
+    cs: n('cs'), cf: n('cf'), gr: n('gr'),
+    commitFee: parseInt(document.getElementById('commitFee').value) || 0,
+    specialFee: parseInt(document.getElementById('specialFee').value) || 0,
+    trainingHours: n('trainingHours'),
+    trainDays: n('trainDays'),
+    note: document.getElementById('note').value,
+    invoiceDate: document.getElementById('invoiceDate').value
+  };
+  var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = year + '年' + String(month).padStart(2,'0') + '月_' + currentTrainer.name + '_請求書.json';
+  a.click();
+}
+
+function loadJSON(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      var data = JSON.parse(ev.target.result);
+      if (data.trainerId !== currentTrainer.id) {
+        alert('このJSONは別のトレーナーのデータです。');
+        return;
+      }
+      document.getElementById('s45').value = data.s45 || 0;
+      document.getElementById('s60').value = data.s60 || 0;
+      document.getElementById('s75').value = data.s75 || 0;
+      document.getElementById('cs').value = data.cs || 0;
+      document.getElementById('cf').value = data.cf || 0;
+      document.getElementById('gr').value = data.gr || 0;
+      document.getElementById('commitFee').value = data.commitFee || 0;
+      document.getElementById('specialFee').value = data.specialFee || 0;
+      document.getElementById('trainingHours').value = data.trainingHours || 0;
+      document.getElementById('trainDays').value = data.trainDays || 0;
+      document.getElementById('note').value = data.note || '';
+      if (data.invoiceDate) document.getElementById('invoiceDate').value = data.invoiceDate;
+      calcAndSave();
+      alert('読み込み完了しました');
+    } catch(err) {
+      alert('JSONの読み込みに失敗しました: ' + err.message);
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+// ============================================================
+// PDF生成（html2canvas方式・文字化けなし）
+// ============================================================
+async function generatePDF() {
+  if (!currentTrainer) return;
+  if (!window.jspdf || !window.jspdf.jsPDF) { alert('PDFライブラリが読み込まれていません。インターネット接続を確認してください。'); return; }
+  if (!window.html2canvas) { alert('html2canvasが読み込まれていません。インターネット接続を確認してください。'); return; }
+
+  var btn = document.getElementById('btnPDF');
+  var msgEl = document.getElementById('pdfMsg');
+  btn.disabled = true;
+  btn.textContent = 'PDF作成中...';
+  msgEl.innerHTML = '';
+
+  try {
+    var trainer = currentTrainer;
+    var year = document.getElementById('targetYear').value;
+    var month = document.getElementById('targetMonth').value;
+    var s45 = n('s45'), s60 = n('s60'), s75 = n('s75');
+    var training = n('trainingHours'), transport = n('trainDays');
+    var cs = n('cs'), cf = n('cf'), gr = n('gr');
+    var commitFee = parseInt(document.getElementById('commitFee').value) || 0;
+    var specialFee = parseInt(document.getElementById('specialFee').value) || 0;
+    var calc = calcAmounts(trainer, s45, s60, s75, training, transport, cs, cf, gr, commitFee, specialFee);
+    var invDate = document.getElementById('invoiceDate').value;
+    var note = document.getElementById('note').value;
+    var ym = String(year) + String(month).padStart(2,'0');
+    var invNum = ym + '-' + trainer.trainerNumber;
+
+    var pageHtml = buildInvoiceHTML(trainer, year, month, s45, s60, s75, training, transport, cs, cf, gr, commitFee, specialFee, calc, invDate, invNum, note);
+
+    var jsPDF = window.jspdf.jsPDF;
+    var doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+    // ページHTML要素を非表示で作成
+    var container = document.getElementById('pdfContainer');
+    container.innerHTML = '';
+    var pageEl = document.createElement('div');
+    pageEl.style.width = '794px';
+    pageEl.style.height = '1123px';
+    pageEl.style.background = '#ffffff';
+    pageEl.style.position = 'relative';
+    pageEl.style.overflow = 'hidden';
+    pageEl.innerHTML = pageHtml;
+    container.appendChild(pageEl);
+
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+
+    var canvas = await html2canvas(pageEl, {
+      scale: 2,
+      backgroundColor: '#ffffff',
+      useCORS: true,
+      logging: false,
+      windowWidth: 794,
+      windowHeight: 1123
+    });
+
+    var imgData = canvas.toDataURL('image/jpeg', 0.97);
+    doc.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+
+    container.innerHTML = '';
+
+    var fileName = year + '年' + String(month).padStart(2,'0') + '月分請求書_' + trainer.name.replace(/\s/g,'') + '.pdf';
+
+    // シンプルにダウンロード
+    doc.save(fileName);
+    msgEl.innerHTML = '<div class="success-msg">PDFをダウンロードしました</div>';
+
+  } catch(err) {
+    msgEl.innerHTML = '<div class="error-msg">PDF作成失敗: ' + err.message + '</div>';
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'PDFを作成';
+  }
+}
+
+function buildInvoiceHTML(trainer, year, month, s45, s60, s75, training, transport, cs, cf, gr, commitFee, specialFee, calc, invDate, invNum, note) {
+  function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function fmtN(v){ return Math.round(v).toLocaleString('ja-JP'); }
+
+  // 明細行（0本でも全行表示 Misoca風）
+  function detailRow(name, qty, unit, rate, amount) {
+    var amtStr = qty === 0 ? '0' : fmtN(amount);
+    return '<tr>' +
+      '<td style="padding:10px 12px;border-bottom:1px solid #e8e8e8;font-size:13px;">' + esc(name) + '</td>' +
+      '<td style="padding:10px 12px;border-bottom:1px solid #e8e8e8;font-size:13px;text-align:right;">' + qty + '</td>' +
+      '<td style="padding:10px 12px;border-bottom:1px solid #e8e8e8;font-size:13px;text-align:center;">' + unit + '</td>' +
+      '<td style="padding:10px 12px;border-bottom:1px solid #e8e8e8;font-size:13px;text-align:right;">' + fmtN(rate) + '</td>' +
+      '<td style="padding:10px 12px;border-bottom:1px solid #e8e8e8;font-size:13px;text-align:right;">' + amtStr + '</td>' +
+    '</tr>';
+  }
+
+  var rows =
+    detailRow('パーソナルトレーニング45分', s45, '本', trainer.rate45, calc.a45) +
+    detailRow('パーソナルトレーニング60分', s60, '本', trainer.rate60, calc.a60) +
+    detailRow('パーソナルトレーニング75分', s75, '本', trainer.rate75, calc.a75) +
+    detailRow('カウンセリング成約', cs, '本', trainer.rateCounselSuccess, calc.aCS) +
+    detailRow('カウンセリング未成約', cf, '本', trainer.rateCounselFail, calc.aCF) +
+    detailRow('Google口コミ獲得', gr, '件', trainer.rateGoogleReview, calc.aGR) +
+    detailRow('研修業務', training, '時間', trainer.rateTraining, calc.aTraining) +
+    detailRow('電車賃（北千住駅〜西新井駅）', transport, '片道', trainer.rateTransport, calc.aTransport);
+
+  if (commitFee > 0) {
+    rows += detailRow('店舗コミットボーナス', 1, '回', commitFee, calc.aCommit);
+  }
+  if (specialFee > 0) {
+    rows += detailRow('特別手当', 1, '回', specialFee, calc.aSpecial);
+  }
+
+  // 空行を数行追加（Misoca風の余白）
+  for (var i = 0; i < 3; i++) {
+    rows += '<tr><td style="padding:10px 12px;border-bottom:1px solid #e8e8e8;font-size:13px;">&nbsp;</td>' +
+      '<td style="padding:10px 12px;border-bottom:1px solid #e8e8e8;"></td>' +
+      '<td style="padding:10px 12px;border-bottom:1px solid #e8e8e8;"></td>' +
+      '<td style="padding:10px 12px;border-bottom:1px solid #e8e8e8;"></td>' +
+      '<td style="padding:10px 12px;border-bottom:1px solid #e8e8e8;"></td></tr>';
+  }
+
+  return '<div style="width:794px;height:1123px;background:#fff;font-family:\'Hiragino Kaku Gothic ProN\',\'Yu Gothic\',\'Noto Sans JP\',sans-serif;color:#333;padding:0;box-sizing:border-box;position:relative;">' +
+
+    // 上部カラーバー
+    '<div style="height:6px;background:#e85555;width:100%;"></div>' +
+
+    '<div style="padding:40px 52px 40px;">' +
+
+    // ヘッダー行：日付・請求番号（右上）
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">' +
+      '<div style="font-size:28px;font-weight:700;color:#222;letter-spacing:0.12em;">請　求　書</div>' +
+      '<div style="text-align:right;font-size:12px;color:#666;line-height:1.9;">' +
+        '<div>' + esc(invDate) + '</div>' +
+        '<div>請求番号: ' + esc(invNum) + '</div>' +
+      '</div>' +
+    '</div>' +
+
+    // 区切り線
+    '<div style="height:1px;background:#ddd;margin:12px 0 20px;"></div>' +
+
+    // 請求先 + 発行者（左右）
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px;">' +
+
+      // 請求先（左）
+      '<div style="flex:1;">' +
+        '<div style="font-size:20px;font-weight:700;color:#222;border-bottom:2px solid #333;display:inline-block;padding-bottom:2px;margin-bottom:8px;">合同会社フレッチャワークス　様</div>' +
+        '<div style="font-size:13px;color:#555;margin-bottom:2px;">件名：パーソナルトレーニング' + month + '月分</div>' +
+        '<div style="font-size:13px;color:#555;">下記のとおりご請求申し上げます。</div>' +
+      '</div>' +
+
+      // 発行者（右）
+      '<div style="font-size:12px;color:#444;text-align:right;min-width:210px;line-height:1.85;">' +
+        (trainer.postalCode ? '<div>〒' + esc(trainer.postalCode) + '</div>' : '') +
+        (trainer.address ? '<div>' + esc(trainer.address) + '</div>' : '') +
+        (trainer.phone ? '<div>TEL: ' + esc(trainer.phone) + '</div>' : '') +
+        (trainer.email ? '<div>' + esc(trainer.email) + '</div>' : '') +
+        '<div style="font-size:16px;font-weight:700;color:#222;margin-top:6px;">' + esc(trainer.name) + '</div>' +
+        (trainer.invoiceNumber ? '<div style="font-size:11px;color:#888;">登録番号: ' + esc(trainer.invoiceNumber) + '</div>' : '') +
+      '</div>' +
+    '</div>' +
+
+    // ご請求金額ボックス
+    '<div style="border:1px solid #ccc;padding:12px 20px;margin-bottom:22px;display:flex;align-items:center;gap:24px;">' +
+      '<div style="font-size:14px;color:#555;white-space:nowrap;">ご請求金額</div>' +
+      '<div style="font-size:26px;font-weight:700;color:#222;letter-spacing:0.02em;">¥' + fmtN(calc.total) + '　-</div>' +
+    '</div>' +
+
+    // 明細テーブル
+    '<table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:0;">' +
+      '<thead>' +
+        '<tr style="background:#f5f5f5;">' +
+          '<th style="padding:10px 12px;text-align:left;font-weight:600;border:1px solid #e0e0e0;font-size:12px;width:42%;">品番・品名</th>' +
+          '<th style="padding:10px 12px;text-align:right;font-weight:600;border:1px solid #e0e0e0;font-size:12px;width:12%;">数量</th>' +
+          '<th style="padding:10px 12px;text-align:center;font-weight:600;border:1px solid #e0e0e0;font-size:12px;width:8%;">単位</th>' +
+          '<th style="padding:10px 12px;text-align:right;font-weight:600;border:1px solid #e0e0e0;font-size:12px;width:18%;">単価</th>' +
+          '<th style="padding:10px 12px;text-align:right;font-weight:600;border:1px solid #e0e0e0;font-size:12px;width:20%;">金額</th>' +
+        '</tr>' +
+      '</thead>' +
+      '<tbody style="border:1px solid #e0e0e0;">' + rows + '</tbody>' +
+    '</table>' +
+
+    // 小計・合計エリア（右寄せ）
+    '<table style="margin-left:auto;border-collapse:collapse;font-size:13px;width:320px;margin-top:0;border:1px solid #e0e0e0;border-top:none;">' +
+      '<tr style="background:#f9f9f9;">' +
+        '<td style="padding:9px 14px;border-bottom:1px solid #e0e0e0;color:#555;">小計</td>' +
+        '<td style="padding:9px 14px;border-bottom:1px solid #e0e0e0;text-align:right;">' + fmtN(calc.subtotal) + '</td>' +
+      '</tr>' +
+      '<tr style="background:#f9f9f9;">' +
+        '<td style="padding:9px 14px;border-bottom:1px solid #e0e0e0;color:#555;">消費税</td>' +
+        '<td style="padding:9px 14px;border-bottom:1px solid #e0e0e0;text-align:right;">0</td>' +
+      '</tr>' +
+      (trainer.withholding ?
+      '<tr style="background:#f9f9f9;">' +
+        '<td style="padding:9px 14px;border-bottom:1px solid #e0e0e0;color:#555;">源泉徴収税額</td>' +
+        '<td style="padding:9px 14px;border-bottom:1px solid #e0e0e0;text-align:right;color:#c0392b;">-' + fmtN(calc.withholding) + '</td>' +
+      '</tr>' : '') +
+      '<tr style="background:#f0f0f0;">' +
+        '<td style="padding:10px 14px;font-weight:700;font-size:14px;color:#222;">合計</td>' +
+        '<td style="padding:10px 14px;font-weight:700;font-size:14px;text-align:right;color:#222;">' + fmtN(calc.total) + '</td>' +
+      '</tr>' +
+    '</table>' +
+
+    // 課税・非課税内訳（Misoca風）
+    '<table style="margin-left:auto;border-collapse:collapse;font-size:11px;width:320px;margin-top:4px;border:1px solid #e0e0e0;">' +
+      '<tr>' +
+        '<td style="padding:6px 12px;border-right:1px solid #e0e0e0;color:#777;width:80px;">10%対象</td>' +
+        '<td style="padding:6px 12px;border-right:1px solid #e0e0e0;text-align:right;width:70px;">0</td>' +
+        '<td style="padding:6px 12px;border-right:1px solid #e0e0e0;color:#777;width:60px;">消費税</td>' +
+        '<td style="padding:6px 12px;text-align:right;width:70px;">0</td>' +
+      '</tr>' +
+      '<tr style="border-top:1px solid #e0e0e0;">' +
+        '<td style="padding:6px 12px;border-right:1px solid #e0e0e0;color:#777;">対象外</td>' +
+        '<td style="padding:6px 12px;border-right:1px solid #e0e0e0;text-align:right;">' + fmtN(calc.subtotal) + '</td>' +
+        '<td style="padding:6px 12px;border-right:1px solid #e0e0e0;color:#777;">消費税</td>' +
+        '<td style="padding:6px 12px;text-align:right;">0</td>' +
+      '</tr>' +
+    '</table>' +
+
+    // 備考
+    (note ? '<div style="margin-top:18px;font-size:12px;"><span style="color:#777;">備考：</span>' + esc(note) + '</div>' : '') +
+
+    // フッター
+    '<div style="position:absolute;bottom:20px;right:52px;font-size:10px;color:#aaa;">© Misoca 請求書サービス風 / FRECCIA 西新井店</div>' +
+
+    '</div>' + // padding div
+  '</div>';
+}
+
+// ============================================================
+// 管理者画面
+// ============================================================
+function showAdminView() {
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('appPage').style.display = 'block';
+  document.getElementById('trainerView').classList.add('hidden');
+  document.getElementById('adminView').classList.remove('hidden');
+  document.getElementById('userBadge').textContent = '管理者';
+  document.getElementById('headerTitle').textContent = '管理者画面';
+  renderTrainerList();
+  switchAdminTab('trainers');
+}
+
+function switchAdminTab(tab) {
+  document.getElementById('adminTabTrainers').classList.toggle('hidden', tab !== 'trainers');
+  document.getElementById('adminTabSettings').classList.toggle('hidden', tab !== 'settings');
+  document.querySelectorAll('#adminView .tab-btn').forEach(function(btn, i){
+    btn.classList.toggle('active', (i === 0 && tab === 'trainers') || (i === 1 && tab === 'settings'));
+  });
+}
+
+function renderTrainerList() {
+  var list = document.getElementById('trainerList');
+  list.innerHTML = '';
+  trainers.forEach(function(t) {
+    var item = document.createElement('div');
+    item.className = 'trainer-item';
+    item.innerHTML =
+      '<div class="trainer-item-info">' +
+        '<div class="trainer-item-name">' + t.name + '</div>' +
+        '<div class="trainer-item-meta">' + t.trainerNumber + ' / 45分:¥' + t.rate45 + ' 60分:¥' + t.rate60 + ' 75分:¥' + t.rate75 +
+          ' / 源泉: <span class="badge ' + (t.withholding ? 'badge-yes' : 'badge-no') + '">' + (t.withholding ? 'あり' : 'なし') + '</span></div>' +
+      '</div>' +
+      '<div class="trainer-item-actions">' +
+        '<button class="btn btn-secondary btn-sm" onclick="openTrainerModal(\'' + t.id + '\')">編集</button>' +
+        '<button class="btn btn-danger btn-sm" onclick="deleteTrainer(\'' + t.id + '\')">削除</button>' +
+      '</div>';
+    list.appendChild(item);
+  });
+}
+
+function openTrainerModal(trainerId) {
+  var modal = document.getElementById('trainerModal');
+  document.getElementById('trainerModalError').classList.add('hidden');
+
+  if (trainerId) {
+    var t = getTrainerById(trainerId);
+    if (!t) return;
+    document.getElementById('trainerModalTitle').textContent = 'トレーナー編集';
+    document.getElementById('editTrainerId').value = trainerId;
+    document.getElementById('eN').value = t.name;
+    document.getElementById('eTN').value = t.trainerNumber;
+    document.getElementById('ePW').value = t.password;
+    document.getElementById('ePC').value = t.postalCode || '';
+    document.getElementById('ePH').value = t.phone || '';
+    document.getElementById('eAD').value = t.address || '';
+    document.getElementById('eEM').value = t.email || '';
+    document.getElementById('eIV').value = t.invoiceNumber || '';
+    document.getElementById('eR45').value = t.rate45;
+    document.getElementById('eR60').value = t.rate60;
+    document.getElementById('eR75').value = t.rate75;
+    document.getElementById('eRCS').value = (t.rateCounselSuccess !== undefined) ? t.rateCounselSuccess : 2800;
+    document.getElementById('eRCF').value = (t.rateCounselFail !== undefined) ? t.rateCounselFail : 1250;
+    document.getElementById('eRGR').value = (t.rateGoogleReview !== undefined) ? t.rateGoogleReview : 750;
+    document.getElementById('eRTR').value = t.rateTraining;
+    document.getElementById('eRTP').value = t.rateTransport;
+    document.getElementById('eWH').value = t.withholding ? 'true' : 'false';
+  } else {
+    document.getElementById('trainerModalTitle').textContent = 'トレーナー追加';
+    document.getElementById('editTrainerId').value = '';
+    document.getElementById('eN').value = '';
+    document.getElementById('eTN').value = '';
+    document.getElementById('ePW').value = '';
+    document.getElementById('ePC').value = '';
+    document.getElementById('ePH').value = '';
+    document.getElementById('eAD').value = '';
+    document.getElementById('eEM').value = '';
+    document.getElementById('eIV').value = '';
+    document.getElementById('eR45').value = 2100;
+    document.getElementById('eR60').value = 2800;
+    document.getElementById('eR75').value = 3300;
+    document.getElementById('eRCS').value = 2800;
+    document.getElementById('eRCF').value = 1250;
+    document.getElementById('eRGR').value = 750;
+    document.getElementById('eRTR').value = 1250;
+    document.getElementById('eRTP').value = 178;
+    document.getElementById('eWH').value = 'true';
+  }
+  modal.classList.add('open');
+}
+
+function closeTrainerModal() {
+  document.getElementById('trainerModal').classList.remove('open');
+}
+
+function saveTrainer() {
+  var errEl = document.getElementById('trainerModalError');
+  errEl.classList.add('hidden');
+
+  var name = document.getElementById('eN').value.trim();
+  var tn = document.getElementById('eTN').value.trim();
+  var pw = document.getElementById('ePW').value.trim();
+
+  if (!name) { errEl.textContent = '氏名を入力してください'; errEl.classList.remove('hidden'); return; }
+  if (!tn) { errEl.textContent = 'トレーナー番号を入力してください'; errEl.classList.remove('hidden'); return; }
+  if (!pw) { errEl.textContent = 'パスワードを入力してください'; errEl.classList.remove('hidden'); return; }
+
+  var editId = document.getElementById('editTrainerId').value;
+  var newData = {
+    id: editId || tn,
+    trainerNumber: tn,
+    name: name,
+    password: pw,
+    postalCode: document.getElementById('ePC').value.trim(),
+    address: document.getElementById('eAD').value.trim(),
+    phone: document.getElementById('ePH').value.trim(),
+    email: document.getElementById('eEM').value.trim(),
+    invoiceNumber: document.getElementById('eIV').value.trim(),
+    rate45: parseInt(document.getElementById('eR45').value) || 0,
+    rate60: parseInt(document.getElementById('eR60').value) || 0,
+    rate75: parseInt(document.getElementById('eR75').value) || 0,
+    rateCounselSuccess: parseInt(document.getElementById('eRCS').value) || 0,
+    rateCounselFail: parseInt(document.getElementById('eRCF').value) || 0,
+    rateGoogleReview: parseInt(document.getElementById('eRGR').value) || 0,
+    rateTraining: parseInt(document.getElementById('eRTR').value) || 0,
+    rateTransport: parseInt(document.getElementById('eRTP').value) || 0,
+    withholding: document.getElementById('eWH').value === 'true'
+  };
+
+  if (editId) {
+    var idx = trainers.findIndex(function(t){ return t.id === editId; });
+    if (idx >= 0) trainers[idx] = newData;
+  } else {
+    // 番号重複チェック
+    if (trainers.some(function(t){ return t.trainerNumber === tn; })) {
+      errEl.textContent = 'このトレーナー番号は既に使用されています';
+      errEl.classList.remove('hidden');
+      return;
+    }
+    trainers.push(newData);
+  }
+
+  saveTrainers();
+  renderTrainerList();
+  closeTrainerModal();
+}
+
+function deleteTrainer(id) {
+  var t = getTrainerById(id);
+  if (!t) return;
+  if (!confirm('「' + t.name + '」を削除しますか？この操作は元に戻せません。')) return;
+  trainers = trainers.filter(function(tr){ return tr.id !== id; });
+  saveTrainers();
+  renderTrainerList();
+}
+
+function adminExportJSON() {
+  var blob = new Blob([JSON.stringify(trainers, null, 2)], { type: 'application/json' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'freccia_trainers.json';
+  a.click();
+}
+
+function adminLoadJSON(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      var data = JSON.parse(ev.target.result);
+      if (!Array.isArray(data)) throw new Error('配列形式のJSONではありません');
+      if (data.length === 0) throw new Error('データが空です');
+      trainers = data.map(normalizeTrainer);
+      saveTrainers();
+      renderTrainerList();
+      document.getElementById('adminSettingsMsg').innerHTML = '<div class="success-msg">読み込み完了しました（' + data.length + '件）</div>';
+    } catch(err) {
+      document.getElementById('adminSettingsMsg').innerHTML = '<div class="error-msg">読み込み失敗: ' + err.message + '</div>';
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function adminResetDefault() {
+  if (!confirm('初期設定にリセットしますか？現在のトレーナーデータはすべて削除されます。')) return;
+  trainers = JSON.parse(JSON.stringify(DEFAULT_TRAINERS));
+  saveTrainers();
+  renderTrainerList();
+  document.getElementById('adminSettingsMsg').innerHTML = '<div class="success-msg">初期設定にリセットしました</div>';
+}
+
+// ============================================================
+// 初期化
+// ============================================================
+loadTrainers();
+</script>
+<script>
+'use strict';
+
+// ============================================================
+// FRECCIA invoice v6 - core data, validation and calculation
+// ============================================================
+var APP_SCHEMA_VERSION = 6;
+var ADMIN_PASSWORD = '3852';
+var STORAGE_TRAINERS = 'freccia_trainers';
+var STORAGE_INPUT_PREFIX = 'freccia_input_';
+var SESSION_KEYS = ['s45', 's60', 's75', 'p45', 'p60'];
+var SESSION_LABELS = {
+  s45: '通常45分', s60: '通常60分', s75: '通常75分',
+  p45: 'ペア45分', p60: 'ペア60分'
+};
+var MENU_MAP = {
+  'パーソナルトレーニングのみ45分': 's45',
+  'パーソナルトレーニングのみ60分': 's60',
+  'パーソナルトレーニングのみ75分': 's75',
+  'ペアトレーニングのみ45分': 'p45',
+  'ペアトレーニングのみ60分': 'p60'
+};
+
+var DEFAULT_TRAINERS = [
+  {
+    id:'T001', trainerNumber:'T001', name:'東 嵩大', password:'1111',
+    postalCode:'120-0021', address:'東京都足立区日ノ出町８ー８ アネックスすずらん203号室',
+    phone:'080-4372-0058', email:'b19126as@gmail.com', invoiceNumber:'T4810324944389',
+    rate45:2100, rate60:2800, rate75:3300, ratePair45:2800, ratePair60:3500,
+    rateTraining:1250, rateTransport:178, rateCounselSuccess:2800,
+    rateCounselFail:1250, rateGoogleReview:750, withholding:true
+  },
+  {
+    id:'T002', trainerNumber:'T002', name:'庄司 郁也', password:'2222',
+    postalCode:'', address:'', phone:'', email:'', invoiceNumber:'',
+    rate45:2100, rate60:2800, rate75:3300, ratePair45:2800, ratePair60:3500,
+    rateTraining:1250, rateTransport:178, rateCounselSuccess:2800,
+    rateCounselFail:1250, rateGoogleReview:750, withholding:true
+  },
+  {
+    id:'T000', trainerNumber:'T000', name:'矢作 勇気', password:'3333',
+    postalCode:'', address:'', phone:'', email:'', invoiceNumber:'',
+    rate45:2100, rate60:2800, rate75:3300, ratePair45:2800, ratePair60:3500,
+    rateTraining:1250, rateTransport:178, rateCounselSuccess:2800,
+    rateCounselFail:1250, rateGoogleReview:750, withholding:true
+  }
+];
+
+var currentUser = null;
+var currentTrainer = null;
+var trainers = [];
+var currentInputState = null;
+var pendingStorageBackup = null;
+var csvPreviewState = null;
+var csvJobToken = 0;
+var startupWarnings = [];
+
+function own(obj, key) {
+  return Object.prototype.hasOwnProperty.call(obj || {}, key);
+}
+
+function deepClone(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function normalizeText(value) {
+  return String(value == null ? '' : value).normalize('NFKC').replace(/[\s\u3000]+/g, '');
+}
+
+function normalizeHeader(value) {
+  return String(value == null ? '' : value).replace(/^\uFEFF/, '').normalize('NFKC').trim();
+}
+
+function normalizeTrainerName(value) {
+  return normalizeText(value);
+}
+
+function finiteNonNegative(value, label, integer) {
+  if (value === '' || value == null || typeof value === 'boolean') {
+    throw new Error(label + 'を入力してください。');
+  }
+  var number = Number(value);
+  if (!Number.isFinite(number) || number < 0 || (integer && !Number.isInteger(number))) {
+    throw new Error(label + 'は0以上' + (integer ? 'の整数' : 'の数値') + 'で入力してください。');
+  }
+  return number;
+}
+
+function storedNumber(obj, key, fallback, label, integer) {
+  if (!own(obj, key) || obj[key] == null || obj[key] === '') return fallback;
+  return finiteNonNegative(obj[key], label, integer);
+}
+
+function readNumber(id, label, integer) {
+  return finiteNonNegative(document.getElementById(id).value.trim(), label, integer);
+}
+
+function readRate(id, label) {
+  return finiteNonNegative(document.getElementById(id).value.trim(), label, true);
+}
+
+function fmt(value) {
+  return '¥' + Math.round(value).toLocaleString('ja-JP');
+}
+
+function inputKey(trainerId, year, month) {
+  return STORAGE_INPUT_PREFIX + trainerId + '_' + String(year) + '_' + String(month);
+}
+
+function backupKey(key, suffix) {
+  return key + '_' + suffix;
+}
+
+function todayValue() {
+  var d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+function zeroCounts() {
+  return { s45:0, s60:0, s75:0, p45:0, p60:0 };
+}
+
+function blankInputData(trainerId, year, month) {
+  return {
+    schemaVersion:APP_SCHEMA_VERSION,
+    trainerId:String(trainerId), targetYear:String(year), targetMonth:String(month),
+    s45:0, s60:0, s75:0, p45:0, p60:0,
+    cs:0, cf:0, gr:0, commitFee:0, specialFee:0,
+    trainingHours:0, trainDays:0, note:'', invoiceDate:todayValue(),
+    csvCounts:null, adjustments:zeroCounts(), adjustmentReason:'', csvImport:null
+  };
+}
+
+function sanitizeStoredRecord(record) {
+  if (!record || typeof record !== 'object') return null;
+  var clean = {
+    reservationNo:String(record.reservationNo || ''),
+    date:String(record.date || ''),
+    startTime:String(record.startTime || ''),
+    menu:String(record.menu || ''),
+    status:String(record.status || ''),
+    staff:String(record.staff || ''),
+    decision:String(record.decision || ''),
+    category:String(record.category || ''),
+    reason:String(record.reason || '')
+  };
+  return clean.reservationNo ? clean : null;
+}
+
+function normalizeInputData(raw, trainerId, year, month) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('保存データがオブジェクト形式ではありません。');
+  var data = blankInputData(trainerId, year, month);
+  SESSION_KEYS.forEach(function(key) {
+    data[key] = storedNumber(raw, key, 0, SESSION_LABELS[key], true);
+  });
+  data.cs = storedNumber(raw, 'cs', 0, 'カウンセリング成約本数', true);
+  data.cf = storedNumber(raw, 'cf', 0, 'カウンセリング未成約本数', true);
+  data.gr = storedNumber(raw, 'gr', 0, 'Google口コミ件数', true);
+  data.commitFee = storedNumber(raw, 'commitFee', 0, '店舗コミットボーナス', true);
+  data.specialFee = storedNumber(raw, 'specialFee', 0, '特別手当', true);
+  data.trainingHours = storedNumber(raw, 'trainingHours', 0, '研修時間', false);
+  data.trainDays = storedNumber(raw, 'trainDays', 0, '交通費対象回数', true);
+  data.note = typeof raw.note === 'string' ? raw.note : '';
+  data.invoiceDate = typeof raw.invoiceDate === 'string' ? raw.invoiceDate : todayValue();
+  data.adjustmentReason = typeof raw.adjustmentReason === 'string' ? raw.adjustmentReason : '';
+
+  if (raw.csvCounts != null) {
+    if (typeof raw.csvCounts !== 'object' || Array.isArray(raw.csvCounts)) throw new Error('CSV自動集計本数が壊れています。');
+    data.csvCounts = zeroCounts();
+    SESSION_KEYS.forEach(function(key) {
+      data.csvCounts[key] = storedNumber(raw.csvCounts, key, 0, 'CSV ' + SESSION_LABELS[key], true);
+      data.adjustments[key] = data[key] - data.csvCounts[key];
+    });
+  }
+
+  if (raw.csvImport != null) {
+    if (!raw.csvImport || typeof raw.csvImport !== 'object' || Array.isArray(raw.csvImport)) throw new Error('CSV取込情報が壊れています。');
+    var records = Array.isArray(raw.csvImport.records) ? raw.csvImport.records.map(sanitizeStoredRecord).filter(Boolean) : [];
+    data.csvImport = {
+      fileName:String(raw.csvImport.fileName || ''), encoding:String(raw.csvImport.encoding || ''),
+      importedAt:String(raw.csvImport.importedAt || ''), sourceRowCount:Number(raw.csvImport.sourceRowCount) || 0,
+      containsFuture:Boolean(raw.csvImport.containsFuture), records:records
+    };
+  }
+  data.schemaVersion = APP_SCHEMA_VERSION;
+  data.trainerId = String(trainerId);
+  data.targetYear = String(year);
+  data.targetMonth = String(month);
+  return data;
+}
+
+function normalizeTrainer(trainer) {
+  if (!trainer || typeof trainer !== 'object' || Array.isArray(trainer)) throw new Error('トレーナー設定の形式が不正です。');
+  var t = Object.assign({}, trainer);
+  if (t.rateCounselSuccess == null) t.rateCounselSuccess = 2800;
+  if (t.rateCounselFail == null) t.rateCounselFail = 1250;
+  if (t.rateGoogleReview == null) t.rateGoogleReview = 750;
+  if (t.rate45 == null) t.rate45 = 0;
+  if (t.rate60 == null) t.rate60 = 0;
+  if (t.rate75 == null) t.rate75 = 0;
+  if (t.ratePair45 == null) t.ratePair45 = 2800;
+  if (t.ratePair60 == null) t.ratePair60 = 3500;
+  if (t.rateTraining == null) t.rateTraining = 0;
+  if (t.rateTransport == null) t.rateTransport = 0;
+  return t;
+}
+
+function validateTrainer(trainer) {
+  var t = normalizeTrainer(trainer);
+  ['id','trainerNumber','name','password'].forEach(function(key) {
+    if (typeof t[key] !== 'string' || !t[key].trim()) throw new Error('トレーナーの' + key + 'が未設定です。');
+  });
+  ['rate45','rate60','rate75','ratePair45','ratePair60','rateTraining','rateTransport','rateCounselSuccess','rateCounselFail','rateGoogleReview'].forEach(function(key) {
+    t[key] = finiteNonNegative(t[key], key, true);
+  });
+  t.withholding = Boolean(t.withholding);
+  ['postalCode','address','phone','email','invoiceNumber'].forEach(function(key) { t[key] = String(t[key] || ''); });
+  return t;
+}
+
+function validateTrainerArray(list) {
+  if (!Array.isArray(list) || !list.length) throw new Error('トレーナー設定が空、または配列ではありません。');
+  var result = list.map(validateTrainer);
+  var ids = {}, numbers = {};
+  result.forEach(function(t) {
+    if (ids[t.id]) throw new Error('トレーナーIDが重複しています: ' + t.id);
+    if (numbers[t.trainerNumber]) throw new Error('トレーナー番号が重複しています: ' + t.trainerNumber);
+    ids[t.id] = true; numbers[t.trainerNumber] = true;
+  });
+  return result;
+}
+
+function loadTrainers() {
+  try {
+    var raw = localStorage.getItem(STORAGE_TRAINERS);
+    if (raw) {
+      var parsed = JSON.parse(raw);
+      trainers = validateTrainerArray(parsed);
+      return;
+    }
+  } catch (error) {
+    startupWarnings.push('保存済みトレーナー設定を読み込めませんでした。元データは変更していません: ' + error.message);
+  }
+  trainers = validateTrainerArray(deepClone(DEFAULT_TRAINERS));
+}
+
+function writeTrainerSettings(candidate, backupSuffix) {
+  var checked = validateTrainerArray(candidate);
+  var previous = localStorage.getItem(STORAGE_TRAINERS);
+  if (backupSuffix && previous && localStorage.getItem(backupKey(STORAGE_TRAINERS, backupSuffix)) == null) {
+    localStorage.setItem(backupKey(STORAGE_TRAINERS, backupSuffix), previous);
+  }
+  localStorage.setItem(STORAGE_TRAINERS, JSON.stringify(checked));
+  trainers = checked;
+}
+
+function getTrainerById(id) {
+  return trainers.find(function(t) { return t.id === id; }) || null;
+}
+
+function loadInput(trainerId, year, month) {
+  var key = inputKey(trainerId, year, month);
+  var raw = localStorage.getItem(key);
+  if (!raw) return { data:blankInputData(trainerId, year, month), raw:null, migrated:false, error:null };
+  try {
+    var parsed = JSON.parse(raw);
+    return {
+      data:normalizeInputData(parsed, trainerId, year, month), raw:raw,
+      migrated:Number(parsed.schemaVersion || 0) < APP_SCHEMA_VERSION, error:null
+    };
+  } catch (error) {
+    return { data:blankInputData(trainerId, year, month), raw:raw, migrated:true, error:error };
+  }
+}
+
+function writeInputData(data, backupRaw, backupSuffix) {
+  var key = inputKey(data.trainerId, data.targetYear, data.targetMonth);
+  if (backupRaw && localStorage.getItem(backupKey(key, backupSuffix)) == null) {
+    localStorage.setItem(backupKey(key, backupSuffix), backupRaw);
+  }
+  var serializable = deepClone(data);
+  localStorage.setItem(key, JSON.stringify(serializable));
+}
+
+function calcAmounts(trainer, s45, s60, s75, p45, p60, training, transport, cs, cf, gr, commitFee, specialFee) {
+  var a45 = Math.round(s45 * trainer.rate45);
+  var a60 = Math.round(s60 * trainer.rate60);
+  var a75 = Math.round(s75 * trainer.rate75);
+  var aPair45 = Math.round(p45 * trainer.ratePair45);
+  var aPair60 = Math.round(p60 * trainer.ratePair60);
+  var aTraining = Math.round(training * trainer.rateTraining);
+  var aTransport = Math.round(transport * trainer.rateTransport);
+  var aCS = Math.round(cs * trainer.rateCounselSuccess);
+  var aCF = Math.round(cf * trainer.rateCounselFail);
+  var aGR = Math.round(gr * trainer.rateGoogleReview);
+  var aCommit = Math.round(commitFee);
+  var aSpecial = Math.round(specialFee);
+  var sessionTotal = a45 + a60 + a75 + aPair45 + aPair60;
+  var subtotal = sessionTotal + aTraining + aCS + aCF + aGR + aCommit + aSpecial;
+  var withholding = trainer.withholding ? Math.floor(subtotal * 0.1021) : 0;
+  var total = subtotal + aTransport - withholding;
+  return {
+    a45:a45, a60:a60, a75:a75, aPair45:aPair45, aPair60:aPair60,
+    aTraining:aTraining, aTransport:aTransport, aCS:aCS, aCF:aCF, aGR:aGR,
+    aCommit:aCommit, aSpecial:aSpecial, sessionTotal:sessionTotal,
+    subtotal:subtotal, withholding:withholding, total:total
+  };
+}
+
+function collectFormData() {
+  if (!currentTrainer || !currentInputState) throw new Error('トレーナー情報がありません。');
+  var data = Object.assign({}, currentInputState);
+  data.s45 = readNumber('s45', SESSION_LABELS.s45, true);
+  data.s60 = readNumber('s60', SESSION_LABELS.s60, true);
+  data.s75 = readNumber('s75', SESSION_LABELS.s75, true);
+  data.p45 = readNumber('p45', SESSION_LABELS.p45, true);
+  data.p60 = readNumber('p60', SESSION_LABELS.p60, true);
+  data.cs = readNumber('cs', 'カウンセリング成約本数', true);
+  data.cf = readNumber('cf', 'カウンセリング未成約本数', true);
+  data.gr = readNumber('gr', 'Google口コミ件数', true);
+  data.trainingHours = readNumber('trainingHours', '研修時間', false);
+  data.trainDays = readNumber('trainDays', '交通費対象回数', true);
+  data.commitFee = finiteNonNegative(document.getElementById('commitFee').value, '店舗コミットボーナス', true);
+  data.specialFee = finiteNonNegative(document.getElementById('specialFee').value, '特別手当', true);
+  data.note = document.getElementById('note').value;
+  data.invoiceDate = document.getElementById('invoiceDate').value;
+  data.adjustmentReason = document.getElementById('adjustmentReason').value;
+  data.trainerId = currentTrainer.id;
+  data.targetYear = document.getElementById('targetYear').value;
+  data.targetMonth = document.getElementById('targetMonth').value;
+  data.schemaVersion = APP_SCHEMA_VERSION;
+  data.adjustments = zeroCounts();
+  if (data.csvCounts) {
+    SESSION_KEYS.forEach(function(key) { data.adjustments[key] = data[key] - data.csvCounts[key]; });
+    var hasAdjustment = SESSION_KEYS.some(function(key) { return data.adjustments[key] !== 0; });
+    if (hasAdjustment && !data.adjustmentReason.trim()) {
+      updateAdjustmentSummary(data);
+      throw new Error('CSV集計後に本数を変更した場合は、手動調整の理由を入力してください。');
+    }
+  }
+  return data;
+}
+
+function calculationFromData(data, trainer) {
+  return calcAmounts(
+    trainer, data.s45, data.s60, data.s75, data.p45, data.p60,
+    data.trainingHours, data.trainDays, data.cs, data.cf, data.gr,
+    data.commitFee, data.specialFee
+  );
+}
+</script>
+<script>
+// ============================================================
+// CSV decoding, RFC 4180-style parsing, classification and preview
+// ============================================================
+function parseCsvText(text) {
+  var rows = [];
+  var row = [];
+  var field = '';
+  var inQuotes = false;
+  var afterQuote = false;
+  var line = 1;
+  var rowStartLine = 1;
+
+  function finishField() {
+    row.push(field);
+    field = '';
+    afterQuote = false;
+  }
+  function finishRow() {
+    finishField();
+    rows.push({ values:row, line:rowStartLine });
+    row = [];
+  }
+
+  for (var i = 0; i < text.length; i++) {
+    var ch = text[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') {
+          field += '"';
+          i++;
+        } else {
+          inQuotes = false;
+          afterQuote = true;
+        }
+      } else if (ch === '\r' || ch === '\n') {
+        if (ch === '\r' && text[i + 1] === '\n') i++;
+        field += '\n';
+        line++;
+      } else {
+        field += ch;
+      }
+      continue;
+    }
+
+    if (afterQuote) {
+      if (ch === ',') {
+        finishField();
+      } else if (ch === '\r' || ch === '\n') {
+        if (ch === '\r' && text[i + 1] === '\n') i++;
+        finishRow();
+        line++;
+        rowStartLine = line;
+      } else if (ch !== ' ' && ch !== '\t') {
+        throw new Error(line + '行目: 引用符を閉じた後に不正な文字があります。');
+      }
+      continue;
+    }
+
+    if (ch === '"') {
+      if (field.length !== 0) throw new Error(line + '行目: フィールド途中の引用符は使用できません。');
+      inQuotes = true;
+    } else if (ch === ',') {
+      finishField();
+    } else if (ch === '\r' || ch === '\n') {
+      if (ch === '\r' && text[i + 1] === '\n') i++;
+      finishRow();
+      line++;
+      rowStartLine = line;
+    } else {
+      field += ch;
+    }
+  }
+
+  if (inQuotes) throw new Error(rowStartLine + '行目: 引用符が閉じられていません。');
+  if (field.length || row.length || afterQuote) finishRow();
+  while (rows.length && rows[rows.length - 1].values.every(function(value) { return value === ''; })) rows.pop();
+  if (!rows.length) throw new Error('CSVが空です。');
+  return rows;
+}
+
+function decodeCsvBuffer(buffer) {
+  var bytes = new Uint8Array(buffer);
+  var hasUtf8Bom = bytes.length >= 3 && bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF;
+  if (hasUtf8Bom) {
+    return { text:new TextDecoder('utf-8', { fatal:true }).decode(bytes.subarray(3)), encoding:'UTF-8 BOM' };
+  }
+  try {
+    return { text:new TextDecoder('utf-8', { fatal:true }).decode(bytes), encoding:'UTF-8' };
+  } catch (utf8Error) {
+    try {
+      var sjis = new TextDecoder('shift_jis', { fatal:true }).decode(bytes);
+      if (sjis.indexOf('\uFFFD') >= 0) throw new Error('置換文字が含まれます。');
+      return { text:sjis, encoding:'CP932 / Shift_JIS' };
+    } catch (sjisError) {
+      throw new Error('文字コードをUTF-8またはCP932として判定できませんでした。');
+    }
+  }
+}
+
+function readFileBuffer(file) {
+  if (file.arrayBuffer) return file.arrayBuffer();
+  return new Promise(function(resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = function(event) { resolve(event.target.result); };
+    reader.onerror = function() { reject(new Error('ファイルを読み取れませんでした。')); };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function validVisitDate(value) {
+  var text = String(value || '').trim();
+  if (!/^\d{8}$/.test(text)) return null;
+  var year = Number(text.slice(0, 4));
+  var month = Number(text.slice(4, 6));
+  var day = Number(text.slice(6, 8));
+  var date = new Date(year, month - 1, day);
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return null;
+  return { raw:text, year:year, month:month, day:day, date:date };
+}
+
+function recordSignature(record) {
+  return JSON.stringify([
+    record.date, normalizeTrainerName(record.staff), normalizeText(record.menu),
+    normalizeText(record.status), record.category, record.decision
+  ]);
+}
+
+function classifyDiff(previousRecords, currentRecords, allBookingNos) {
+  var previous = {}, current = {};
+  (previousRecords || []).forEach(function(record) { if (record.reservationNo) previous[record.reservationNo] = record; });
+  (currentRecords || []).forEach(function(record) { if (record.reservationNo) current[record.reservationNo] = record; });
+  var result = { added:0, changed:0, cancelled:0, missing:0, unchanged:0, details:[] };
+
+  Object.keys(current).forEach(function(no) {
+    if (!previous[no]) {
+      result.added++;
+      result.details.push(no + ': 新規');
+    } else if (recordSignature(previous[no]) === recordSignature(current[no])) {
+      result.unchanged++;
+    } else if (previous[no].decision === '集計' && normalizeText(current[no].status).indexOf('キャンセル') >= 0) {
+      result.cancelled++;
+      result.details.push(no + ': キャンセルへ変更');
+    } else {
+      result.changed++;
+      result.details.push(no + ': 内容変更');
+    }
+  });
+  Object.keys(previous).forEach(function(no) {
+    if (!allBookingNos[no]) {
+      result.missing++;
+      result.details.push(no + ': 今回のCSVにありません');
+    }
+  });
+  return result;
+}
+
+function analyzeCsvText(text, options) {
+  var parsedRows = parseCsvText(text);
+  var headerRow = parsedRows[0];
+  var headers = headerRow.values.map(normalizeHeader);
+  var required = ['予約番号', 'ステータス', 'スタッフ名', '来店日', '予約時メニュー'];
+  var indexMap = {};
+  var hardErrors = [];
+  var warnings = [];
+  var notices = [];
+  var previewRecords = [];
+
+  required.forEach(function(name) {
+    var found = [];
+    headers.forEach(function(header, index) { if (header === name) found.push(index); });
+    if (!found.length) hardErrors.push('必須列「' + name + '」がありません。');
+    if (found.length > 1) hardErrors.push('必須列「' + name + '」が重複しています。');
+    if (found.length === 1) indexMap[name] = found[0];
+  });
+  if (hardErrors.length) return { hardErrors:hardErrors, warnings:warnings, notices:notices, records:[], counts:zeroCounts() };
+
+  var visitIndex = indexMap['来店日'];
+  var startTimeIndex = -1;
+  for (var hi = visitIndex + 1; hi < headers.length; hi++) {
+    if (headers[hi] === '開始時間') { startTimeIndex = hi; break; }
+  }
+  var accountingMenuIndex = headers.indexOf('会計時メニュー');
+  var dataRows = parsedRows.slice(1).filter(function(row) { return !row.values.every(function(value) { return value === ''; }); });
+  dataRows.forEach(function(row) {
+    if (row.values.length !== headers.length) {
+      hardErrors.push(row.line + '行目: 列数がヘッダーの' + headers.length + '列と一致しません（' + row.values.length + '列）。');
+    }
+  });
+  if (hardErrors.length) return { hardErrors:hardErrors, warnings:warnings, notices:notices, records:[], counts:zeroCounts() };
+
+  var currentName = normalizeTrainerName(options.trainer.name);
+  var sameNameTrainers = options.trainers.filter(function(trainer) { return normalizeTrainerName(trainer.name) === currentName; });
+  if (sameNameTrainers.length !== 1) {
+    hardErrors.push('ログイン中の担当者名「' + options.trainer.name + '」が設定内で一意ではありません。管理者へ確認してください。');
+    return { hardErrors:hardErrors, warnings:warnings, notices:notices, records:[], counts:zeroCounts() };
+  }
+
+  function valueAt(row, name) { return String(row.values[indexMap[name]] == null ? '' : row.values[indexMap[name]]); }
+  function makeRaw(row) {
+    return {
+      line:row.line,
+      reservationNo:valueAt(row, '予約番号').trim(),
+      status:valueAt(row, 'ステータス').trim(),
+      staff:valueAt(row, 'スタッフ名').trim(),
+      date:valueAt(row, '来店日').trim(),
+      menu:valueAt(row, '予約時メニュー').trim(),
+      startTime:startTimeIndex >= 0 ? String(row.values[startTimeIndex] || '').trim() : '',
+      accountingMenu:accountingMenuIndex >= 0 ? String(row.values[accountingMenuIndex] || '').trim() : ''
+    };
+  }
+
+  var rowsByNo = {};
+  var uniqueRows = [];
+  dataRows.forEach(function(row) {
+    var raw = makeRaw(row);
+    if (!raw.reservationNo) {
+      uniqueRows.push(raw);
+      return;
+    }
+    if (!rowsByNo[raw.reservationNo]) rowsByNo[raw.reservationNo] = [];
+    rowsByNo[raw.reservationNo].push(raw);
+  });
+  Object.keys(rowsByNo).forEach(function(no) {
+    var group = rowsByNo[no];
+    var signatures = {};
+    group.forEach(function(raw) {
+      var signature = JSON.stringify([
+        raw.date, normalizeText(raw.status), normalizeTrainerName(raw.staff),
+        normalizeText(raw.menu), normalizeText(raw.accountingMenu), raw.startTime
+      ]);
+      signatures[signature] = true;
+    });
+    if (Object.keys(signatures).length > 1) {
+      hardErrors.push('予約番号「' + no + '」に集計内容が異なる重複行があります。');
+    } else {
+      uniqueRows.push(group[0]);
+      if (group.length > 1) notices.push('予約番号「' + no + '」の同一内容' + group.length + '行を1件として扱いました。');
+    }
+  });
+  if (hardErrors.length) return { hardErrors:hardErrors, warnings:warnings, notices:notices, records:[], counts:zeroCounts() };
+
+  var previousRecords = options.previousData && options.previousData.csvImport ? options.previousData.csvImport.records || [] : [];
+  var previousNos = {};
+  previousRecords.forEach(function(record) { if (record.reservationNo) previousNos[record.reservationNo] = true; });
+  var allBookingNos = {};
+  uniqueRows.forEach(function(raw) { if (raw.reservationNo) allBookingNos[raw.reservationNo] = true; });
+
+  var counts = zeroCounts();
+  var containsFuture = false;
+  var ignoredOther = 0;
+  var today = options.today || new Date();
+
+  uniqueRows.forEach(function(raw) {
+    var visit = validVisitDate(raw.date);
+    var normalizedStaff = normalizeTrainerName(raw.staff);
+    var matchingTrainers = options.trainers.filter(function(trainer) { return normalizeTrainerName(trainer.name) === normalizedStaff; });
+    var isCurrent = matchingTrainers.length === 1 && matchingTrainers[0].id === options.trainer.id;
+    var wasPrevious = Boolean(raw.reservationNo && previousNos[raw.reservationNo]);
+    var record = {
+      reservationNo:raw.reservationNo, date:raw.date, startTime:raw.startTime,
+      menu:raw.menu, status:raw.status, staff:raw.staff,
+      decision:'除外', category:'', reason:''
+    };
+
+    if (!raw.reservationNo) {
+      record.reason = '予約番号欠落';
+      warnings.push(raw.line + '行目: 予約番号がないため除外候補です。');
+      previewRecords.push(record);
+      return;
+    }
+    if (!raw.staff) {
+      record.reason = 'スタッフ名欠落';
+      warnings.push('予約番号「' + raw.reservationNo + '」: スタッフ名がありません。');
+      previewRecords.push(record);
+      return;
+    }
+    if (!visit) {
+      record.reason = '来店日不正';
+      warnings.push('予約番号「' + raw.reservationNo + '」: 来店日「' + raw.date + '」が不正です。');
+      if (isCurrent || wasPrevious || matchingTrainers.length === 0) previewRecords.push(record);
+      return;
+    }
+    var isTargetMonth = visit.year === Number(options.year) && visit.month === Number(options.month);
+    if (!isTargetMonth) {
+      record.reason = '対象月外';
+      if (wasPrevious) previewRecords.push(record);
+      return;
+    }
+    if (matchingTrainers.length === 0) {
+      record.reason = '担当者対応不明';
+      warnings.push('予約番号「' + raw.reservationNo + '」: スタッフ名「' + raw.staff + '」を設定済みトレーナーへ対応づけられません。');
+      previewRecords.push(record);
+      return;
+    }
+    if (matchingTrainers.length > 1) {
+      record.reason = '担当者名の同名衝突';
+      hardErrors.push('スタッフ名「' + raw.staff + '」が複数のトレーナー設定に一致します。');
+      previewRecords.push(record);
+      return;
+    }
+    if (!isCurrent) {
+      record.reason = '別担当者';
+      ignoredOther++;
+      if (wasPrevious) previewRecords.push(record);
+      return;
+    }
+
+    var status = normalizeText(raw.status);
+    if (!status) {
+      record.reason = 'ステータス欠落';
+      warnings.push('予約番号「' + raw.reservationNo + '」: ステータスがありません。');
+    } else if (status.indexOf('キャンセル') >= 0) {
+      record.reason = 'キャンセル';
+    } else if (status !== '受付待ち' && status !== '会計済み') {
+      record.reason = '未知のステータス';
+      warnings.push('予約番号「' + raw.reservationNo + '」: 未知のステータス「' + raw.status + '」です。');
+    } else if (!raw.menu) {
+      record.reason = '予約時メニュー欠落';
+      warnings.push('予約番号「' + raw.reservationNo + '」: 予約時メニューがありません。');
+    } else {
+      var category = MENU_MAP[normalizeText(raw.menu)];
+      if (!category) {
+        record.reason = '指定5メニュー以外（完全一致せず）';
+      } else {
+        record.decision = '集計';
+        record.category = category;
+        record.reason = SESSION_LABELS[category] + 'として1本';
+        counts[category]++;
+        if (visit.date > new Date(today.getFullYear(), today.getMonth(), today.getDate())) containsFuture = true;
+        if (raw.accountingMenu && normalizeText(raw.accountingMenu) !== normalizeText(raw.menu)) {
+          record.reason += '／会計時メニュー不一致（予約時を採用）';
+          warnings.push('予約番号「' + raw.reservationNo + '」: 予約時メニューと会計時メニューが異なります。');
+        }
+      }
+    }
+    previewRecords.push(record);
+  });
+
+  var storedRecords = previewRecords.filter(function(record) { return Boolean(record.reservationNo); }).map(sanitizeStoredRecord).filter(Boolean);
+  var diff = classifyDiff(previousRecords, storedRecords, allBookingNos);
+  var existingAdjustments = zeroCounts();
+  if (options.previousData && options.previousData.csvCounts) {
+    SESSION_KEYS.forEach(function(key) { existingAdjustments[key] = options.previousData[key] - options.previousData.csvCounts[key]; });
+  }
+  var finalCounts = zeroCounts();
+  SESSION_KEYS.forEach(function(key) {
+    finalCounts[key] = counts[key] + existingAdjustments[key];
+    if (!Number.isInteger(finalCounts[key]) || finalCounts[key] < 0) {
+      hardErrors.push('既存の手動調整を保持すると「' + SESSION_LABELS[key] + '」が負数になります。先に手動調整を見直してください。');
+    }
+  });
+
+  var countChanged = SESSION_KEYS.some(function(key) {
+    return !options.previousData || options.previousData[key] !== finalCounts[key];
+  });
+  var hasAdjustments = SESSION_KEYS.some(function(key) { return existingAdjustments[key] !== 0; });
+  var totalCount = SESSION_KEYS.reduce(function(sum, key) { return sum + counts[key]; }, 0);
+  if (containsFuture) notices.push('未来の予約を含みます。集計値は「予定を含む本数」です。');
+  if (ignoredOther) notices.push('対象月の別担当者予約 ' + ignoredOther + '件は反映対象外です。');
+  if (diff.missing) warnings.push('前回取込にあった予約 ' + diff.missing + '件が今回のCSVにありません。部分CSVの可能性を確認してください。');
+  if (hasAdjustments) warnings.push('既存の手動調整を保持します。二重補正にならないか確認してください。');
+  if (totalCount === 0) warnings.push('自動集計は0件です。既存本数を置き換える前に対象担当者・対象月を確認してください。');
+  if (countChanged) notices.push('現在の最終本数から置き換わる項目があります。');
+
+  return {
+    hardErrors:hardErrors, warnings:warnings, notices:notices,
+    counts:counts, finalCounts:finalCounts, adjustments:existingAdjustments,
+    adjustmentReason:options.previousData ? options.previousData.adjustmentReason || '' : '',
+    records:storedRecords, displayRecords:previewRecords,
+    diff:diff, containsFuture:containsFuture, sourceRowCount:dataRows.length,
+    requiresConfirm:Boolean(warnings.length || countChanged || hasAdjustments || totalCount === 0),
+    context:{ trainerId:options.trainer.id, year:String(options.year), month:String(options.month) }
+  };
+}
+
+function appendBox(parent, type, textValue) {
+  var box = document.createElement('div');
+  box.className = type === 'error' ? 'error-msg' : (type === 'notice' ? 'notice-msg' : (type === 'success' ? 'success-msg' : 'info-msg'));
+  box.textContent = textValue;
+  parent.appendChild(box);
+  return box;
+}
+
+function renderCsvPreview(preview) {
+  var previewEl = document.getElementById('csvPreview');
+  var summary = document.getElementById('csvPreviewSummary');
+  var messages = document.getElementById('csvPreviewMessages');
+  var body = document.getElementById('csvPreviewBody');
+  var confirmRow = document.getElementById('csvConfirmRow');
+  var confirmBox = document.getElementById('csvConfirm');
+  var applyButton = document.getElementById('csvApplyBtn');
+  summary.textContent = '';
+  messages.textContent = '';
+  body.textContent = '';
+  confirmBox.checked = false;
+
+  var heading = document.createElement('div');
+  heading.className = 'text-sm';
+  heading.textContent = currentTrainer.name + '／' + preview.context.year + '年' + preview.context.month + '月 — ' +
+    preview.sourceRowCount + '予約行を検証（' + preview.encoding + '）';
+  summary.appendChild(heading);
+  var countsGrid = document.createElement('div');
+  countsGrid.className = 'csv-counts';
+  SESSION_KEYS.forEach(function(key) {
+    var item = document.createElement('div');
+    item.className = 'csv-count';
+    var label = document.createElement('span'); label.textContent = SESSION_LABELS[key];
+    var count = document.createElement('strong'); count.textContent = preview.counts[key] + '本';
+    item.appendChild(label); item.appendChild(count); countsGrid.appendChild(item);
+  });
+  summary.appendChild(countsGrid);
+  var change = document.createElement('div');
+  change.className = 'text-sm';
+  change.textContent = SESSION_KEYS.map(function(key) {
+    return SESSION_LABELS[key] + ': 現在' + currentInputState[key] + ' → 自動' + preview.counts[key] +
+      (preview.adjustments[key] ? ' ＋調整(' + (preview.adjustments[key] > 0 ? '+' : '') + preview.adjustments[key] + ')' : '') +
+      ' ＝最終' + preview.finalCounts[key];
+  }).join('／');
+  summary.appendChild(change);
+  var diff = document.createElement('div');
+  diff.className = 'text-sm mt8';
+  diff.textContent = '前回との差分: 新規' + preview.diff.added + '／変更' + preview.diff.changed +
+    '／キャンセル化' + preview.diff.cancelled + '／今回なし' + preview.diff.missing + '／同一' + preview.diff.unchanged;
+  summary.appendChild(diff);
+
+  preview.hardErrors.forEach(function(message) { appendBox(messages, 'error', message); });
+  preview.warnings.forEach(function(message) { appendBox(messages, 'notice', message); });
+  preview.notices.forEach(function(message) { appendBox(messages, 'info', message); });
+
+  preview.displayRecords.forEach(function(record) {
+    var tr = document.createElement('tr');
+    [record.reservationNo || '（欠落）', record.date, record.startTime, record.menu || '（空欄）', record.status || '（空欄）', record.decision + ': ' + record.reason].forEach(function(value) {
+      var td = document.createElement('td');
+      td.textContent = value;
+      tr.appendChild(td);
+    });
+    body.appendChild(tr);
+  });
+  if (!preview.displayRecords.length) {
+    var emptyTr = document.createElement('tr');
+    var emptyTd = document.createElement('td');
+    emptyTd.colSpan = 6; emptyTd.textContent = '対象担当者・対象月に関連する予約はありません。';
+    emptyTr.appendChild(emptyTd); body.appendChild(emptyTr);
+  }
+
+  confirmRow.classList.toggle('hidden', !preview.requiresConfirm || preview.hardErrors.length > 0);
+  applyButton.disabled = preview.hardErrors.length > 0 || preview.requiresConfirm;
+  confirmBox.onchange = function() { applyButton.disabled = preview.hardErrors.length > 0 || !confirmBox.checked; };
+  previewEl.classList.remove('hidden');
+}
+
+async function processCsvFile(file) {
+  if (!file || !currentTrainer) return;
+  var token = ++csvJobToken;
+  var context = {
+    trainerId:currentTrainer.id,
+    year:document.getElementById('targetYear').value,
+    month:document.getElementById('targetMonth').value
+  };
+  csvPreviewState = null;
+  document.getElementById('csvPreview').classList.add('hidden');
+  var status = document.getElementById('csvStatus');
+  status.textContent = '';
+  appendBox(status, 'info', 'CSVを読み取り、検証しています…');
+  try {
+    var buffer = await readFileBuffer(file);
+    if (token !== csvJobToken || !currentTrainer || currentTrainer.id !== context.trainerId ||
+        document.getElementById('targetYear').value !== context.year || document.getElementById('targetMonth').value !== context.month) {
+      throw new Error('処理中に担当者または対象年月が変わったため、反映候補を破棄しました。');
+    }
+    var decoded = decodeCsvBuffer(buffer);
+    var preview = analyzeCsvText(decoded.text, {
+      trainer:currentTrainer, trainers:trainers, year:context.year, month:context.month,
+      previousData:currentInputState, today:new Date()
+    });
+    preview.fileName = String(file.name || '');
+    preview.encoding = decoded.encoding;
+    preview.formSnapshot = {};
+    SESSION_KEYS.forEach(function(key) { preview.formSnapshot[key] = document.getElementById(key).value; });
+    preview.formSnapshot.adjustmentReason = document.getElementById('adjustmentReason').value;
+    if (token !== csvJobToken) throw new Error('新しいCSV処理が開始されたため、この結果を破棄しました。');
+    csvPreviewState = preview;
+    status.textContent = '';
+    appendBox(status, preview.hardErrors.length ? 'error' : 'success', preview.hardErrors.length ? 'CSVを反映できません。下記の問題を修正してください。' : '検証が完了しました。まだ保存データには反映していません。');
+    renderCsvPreview(preview);
+  } catch (error) {
+    if (token === csvJobToken) {
+      csvPreviewState = null;
+      document.getElementById('csvPreview').classList.add('hidden');
+      status.textContent = '';
+      appendBox(status, 'error', 'CSV読込失敗: ' + error.message + ' 元の入力は変更していません。');
+    }
+  } finally {
+    document.getElementById('csvFileInput').value = '';
+  }
+}
+
+function cancelCsvPreview() {
+  csvJobToken++;
+  csvPreviewState = null;
+  document.getElementById('csvPreview').classList.add('hidden');
+  document.getElementById('csvStatus').textContent = '';
+  appendBox(document.getElementById('csvStatus'), 'info', '取込を取り消しました。元の入力は変更していません。');
+}
+
+function applyCsvPreview() {
+  var preview = csvPreviewState;
+  if (!preview || !currentTrainer) return;
+  var sameContext = currentTrainer.id === preview.context.trainerId &&
+    document.getElementById('targetYear').value === preview.context.year &&
+    document.getElementById('targetMonth').value === preview.context.month;
+  if (!sameContext) {
+    cancelCsvPreview();
+    appendBox(document.getElementById('csvStatus'), 'error', '担当者または対象年月が変わったため反映を中止しました。CSVを選び直してください。');
+    return;
+  }
+  if (preview.hardErrors.length) return;
+  if (preview.requiresConfirm && !document.getElementById('csvConfirm').checked) return;
+  var changedAfterPreview = SESSION_KEYS.some(function(key) { return document.getElementById(key).value !== preview.formSnapshot[key]; }) ||
+    document.getElementById('adjustmentReason').value !== preview.formSnapshot.adjustmentReason;
+  if (changedAfterPreview) {
+    appendBox(document.getElementById('csvStatus'), 'error', 'プレビュー後に本数または調整理由が変わりました。二重補正を防ぐためCSVを再検証してください。');
+    return;
+  }
+
+  try {
+    var data = collectFormData();
+    data.csvCounts = deepClone(preview.counts);
+    data.adjustments = deepClone(preview.adjustments);
+    SESSION_KEYS.forEach(function(key) { data[key] = preview.finalCounts[key]; });
+    data.adjustmentReason = preview.adjustmentReason;
+    data.csvImport = {
+      fileName:preview.fileName, encoding:preview.encoding, importedAt:new Date().toISOString(),
+      sourceRowCount:preview.sourceRowCount, containsFuture:preview.containsFuture,
+      records:preview.records.map(sanitizeStoredRecord).filter(Boolean)
+    };
+    var key = inputKey(data.trainerId, data.targetYear, data.targetMonth);
+    var previousRaw = localStorage.getItem(key);
+    writeInputData(data, previousRaw, 'before_csv_v6_backup');
+    currentInputState = data;
+    pendingStorageBackup = null;
+    setFormFromData(data);
+    calcAndSave({ skipSave:true });
+    csvPreviewState = null;
+    document.getElementById('csvPreview').classList.add('hidden');
+    document.getElementById('csvStatus').textContent = '';
+    appendBox(document.getElementById('csvStatus'), 'success', 'CSV集計を反映しました。' + (preview.containsFuture ? '未来予約を含む予定本数です。' : ''));
+  } catch (error) {
+    document.getElementById('csvStatus').textContent = '';
+    appendBox(document.getElementById('csvStatus'), 'error', '反映失敗: ' + error.message + ' 元の保存データと入力は変更していません。');
+  }
+}
+</script>
+<script>
+// ============================================================
+// Screen state, JSON compatibility, PDF and administrator UI
+// ============================================================
+function setElementValue(id, value) {
+  document.getElementById(id).value = value == null ? '' : value;
+}
+
+function setFormFromData(data) {
+  SESSION_KEYS.forEach(function(key) { setElementValue(key, data[key]); });
+  setElementValue('cs', data.cs);
+  setElementValue('cf', data.cf);
+  setElementValue('gr', data.gr);
+  setElementValue('commitFee', data.commitFee);
+  setElementValue('specialFee', data.specialFee);
+  setElementValue('trainingHours', data.trainingHours);
+  setElementValue('trainDays', data.trainDays);
+  setElementValue('note', data.note);
+  setElementValue('invoiceDate', data.invoiceDate || todayValue());
+  setElementValue('adjustmentReason', data.adjustmentReason || '');
+  document.getElementById('adjustmentArea').classList.toggle('hidden', !data.csvCounts);
+  updateAdjustmentSummary(data);
+}
+
+function updateAdjustmentSummary(data) {
+  var container = document.getElementById('adjustmentSummary');
+  container.textContent = '';
+  if (!data || !data.csvCounts) return;
+  SESSION_KEYS.forEach(function(key) {
+    var chip = document.createElement('div'); chip.className = 'adjustment-chip';
+    var label = document.createElement('span'); label.textContent = SESSION_LABELS[key];
+    var strong = document.createElement('strong');
+    var adjustment = data.adjustments && Number.isFinite(data.adjustments[key]) ? data.adjustments[key] : data[key] - data.csvCounts[key];
+    strong.textContent = '自動' + data.csvCounts[key] + '／調整' + (adjustment > 0 ? '+' : '') + adjustment;
+    chip.appendChild(label); chip.appendChild(strong); container.appendChild(chip);
+  });
+}
+
+function updateAdjustmentSummaryFromFields() {
+  if (!currentInputState || !currentInputState.csvCounts) return;
+  var draft = Object.assign({}, currentInputState, { adjustments:zeroCounts() });
+  SESSION_KEYS.forEach(function(key) {
+    var number = Number(document.getElementById(key).value);
+    if (Number.isFinite(number)) {
+      draft[key] = number;
+      draft.adjustments[key] = number - currentInputState.csvCounts[key];
+    }
+  });
+  updateAdjustmentSummary(draft);
+}
+
+function showFormError(message) {
+  var element = document.getElementById('formError');
+  element.textContent = message || '';
+  element.classList.toggle('hidden', !message);
+}
+
+function updateAmountDisplays(data, calculation) {
+  document.getElementById('previewTotal').textContent = fmt(calculation.total);
+  document.getElementById('previewSessions').textContent = fmt(calculation.sessionTotal);
+  document.getElementById('previewTraining').textContent = fmt(calculation.aTraining);
+  document.getElementById('previewCounsel').textContent = fmt(calculation.aCS + calculation.aCF);
+  document.getElementById('previewReview').textContent = fmt(calculation.aGR);
+  document.getElementById('previewCommit').textContent = fmt(calculation.aCommit);
+  document.getElementById('previewSpecial').textContent = fmt(calculation.aSpecial);
+  document.getElementById('previewTransport').textContent = fmt(calculation.aTransport);
+  document.getElementById('previewWithholding').textContent = fmt(calculation.withholding);
+  updateSummaryTab(currentTrainer, data, calculation);
+}
+
+function calcAndSave(options) {
+  options = options || {};
+  if (!currentTrainer || !currentInputState) return false;
+  try {
+    var data = collectFormData();
+    var calculation = calculationFromData(data, currentTrainer);
+    currentInputState = data;
+    updateAdjustmentSummary(data);
+    updateAmountDisplays(data, calculation);
+    showFormError('');
+    document.getElementById('btnPDF').disabled = false;
+    if (!options.skipSave) {
+      try {
+        writeInputData(data, pendingStorageBackup, 'v5_migration_backup');
+        pendingStorageBackup = null;
+      } catch (storageError) {
+        showFormError('画面上の入力は保持していますが、ブラウザへ保存できていません: ' + storageError.message + ' JSONでバックアップしてください。');
+      }
+    }
+    return true;
+  } catch (error) {
+    updateAdjustmentSummaryFromFields();
+    showFormError(error.message + ' 保存とPDF作成は行っていません。');
+    document.getElementById('btnPDF').disabled = true;
+    return false;
+  }
+}
+
+function updateSummaryTab(trainer, data, calculation) {
+  var year = data.targetYear;
+  var month = data.targetMonth;
+  var ym = String(year) + String(month).padStart(2, '0');
+  document.getElementById('invoiceNumber').textContent = ym + '-' + trainer.trainerNumber;
+  document.getElementById('invoiceDateDisp').textContent = data.invoiceDate || '未設定';
+  document.getElementById('invoiceSubject').textContent = 'パーソナルトレーニング' + month + '月分';
+
+  var body = document.getElementById('detailTableBody');
+  body.textContent = '';
+  function addRow(name, quantity, unit, rate, amount) {
+    if (quantity === 0) return;
+    var tr = document.createElement('tr');
+    var values = [name, quantity + unit, fmt(rate), fmt(amount)];
+    values.forEach(function(value, index) {
+      var td = document.createElement('td'); td.textContent = value;
+      if (index > 0) td.className = 'td-right';
+      tr.appendChild(td);
+    });
+    body.appendChild(tr);
+  }
+  addRow('パーソナルトレーニング45分', data.s45, '本', trainer.rate45, calculation.a45);
+  addRow('パーソナルトレーニング60分', data.s60, '本', trainer.rate60, calculation.a60);
+  addRow('パーソナルトレーニング75分', data.s75, '本', trainer.rate75, calculation.a75);
+  addRow('ペアトレーニング45分', data.p45, '本', trainer.ratePair45, calculation.aPair45);
+  addRow('ペアトレーニング60分', data.p60, '本', trainer.ratePair60, calculation.aPair60);
+  addRow('カウンセリング成約', data.cs, '本', trainer.rateCounselSuccess, calculation.aCS);
+  addRow('カウンセリング未成約', data.cf, '本', trainer.rateCounselFail, calculation.aCF);
+  addRow('Google口コミ獲得', data.gr, '件', trainer.rateGoogleReview, calculation.aGR);
+  addRow('研修業務', data.trainingHours, '時間', trainer.rateTraining, calculation.aTraining);
+  addRow('電車賃', data.trainDays, '片道', trainer.rateTransport, calculation.aTransport);
+  if (data.commitFee > 0) addRow('店舗コミットボーナス', 1, '回', data.commitFee, calculation.aCommit);
+  if (data.specialFee > 0) addRow('特別手当', 1, '回', data.specialFee, calculation.aSpecial);
+
+  document.getElementById('summSubtotal').textContent = fmt(calculation.subtotal);
+  document.getElementById('summTransport').textContent = fmt(calculation.aTransport);
+  document.getElementById('summWithholding').textContent = '- ' + fmt(calculation.withholding);
+  document.getElementById('withholdingRow').style.display = trainer.withholding ? '' : 'none';
+  document.getElementById('summTotal').textContent = fmt(calculation.total);
+}
+
+function refreshLoginUsers() {
+  var select = document.getElementById('loginUser');
+  var previous = select.value;
+  select.textContent = '';
+  var prompt = document.createElement('option'); prompt.value = ''; prompt.textContent = '選択してください'; select.appendChild(prompt);
+  trainers.forEach(function(trainer) {
+    var option = document.createElement('option'); option.value = trainer.id; option.textContent = trainer.name; select.appendChild(option);
+  });
+  var admin = document.createElement('option'); admin.value = 'admin'; admin.textContent = '管理者'; select.appendChild(admin);
+  if (Array.from(select.options).some(function(option) { return option.value === previous; })) select.value = previous;
+}
+
+function showLoginError(message) {
+  var element = document.getElementById('loginError');
+  element.textContent = message;
+  element.classList.remove('hidden');
+}
+
+function doLogin() {
+  var userId = document.getElementById('loginUser').value;
+  var password = document.getElementById('loginPass').value;
+  document.getElementById('loginError').classList.add('hidden');
+  if (!userId) { showLoginError('ユーザーを選択してください'); return; }
+  if (!password) { showLoginError('パスワードを入力してください'); return; }
+  if (userId === 'admin') {
+    if (password !== ADMIN_PASSWORD) { showLoginError('パスワードが違います'); return; }
+    currentUser = 'admin'; currentTrainer = null; showAdminView();
+    return;
+  }
+  var trainer = getTrainerById(userId);
+  if (!trainer) { showLoginError('ユーザーが見つかりません'); return; }
+  if (password !== trainer.password) { showLoginError('パスワードが違います'); return; }
+  currentUser = trainer.id; currentTrainer = trainer; showTrainerView(trainer);
+}
+
+function doLogout() {
+  csvJobToken++;
+  csvPreviewState = null;
+  currentUser = null; currentTrainer = null; currentInputState = null;
+  document.getElementById('loginPage').style.display = 'flex';
+  document.getElementById('appPage').style.display = 'none';
+  document.getElementById('loginPass').value = '';
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginError').classList.add('hidden');
+}
+
+function ensureYearOption(year) {
+  var select = document.getElementById('targetYear');
+  if (!Array.from(select.options).some(function(option) { return option.value === String(year); })) {
+    var option = document.createElement('option'); option.value = String(year); option.textContent = year + '年'; select.appendChild(option);
+    Array.from(select.options).sort(function(a, b) { return Number(a.value) - Number(b.value); }).forEach(function(item) { select.appendChild(item); });
+  }
+}
+
+function showTrainerView(trainer) {
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('appPage').style.display = 'block';
+  document.getElementById('trainerView').classList.remove('hidden');
+  document.getElementById('adminView').classList.add('hidden');
+  document.getElementById('userBadge').textContent = trainer.name;
+  document.getElementById('headerTitle').textContent = '請求書システム';
+  var now = new Date();
+  var yearSelect = document.getElementById('targetYear');
+  yearSelect.textContent = '';
+  for (var year = now.getFullYear() - 3; year <= now.getFullYear() + 3; year++) {
+    var option = document.createElement('option'); option.value = String(year); option.textContent = year + '年';
+    if (year === now.getFullYear()) option.selected = true;
+    yearSelect.appendChild(option);
+  }
+  document.getElementById('targetMonth').value = String(now.getMonth() + 1);
+  yearSelect.onchange = onPeriodChange;
+  document.getElementById('targetMonth').onchange = onPeriodChange;
+  loadOrResetInput();
+  switchTab('input');
+}
+
+function onPeriodChange() {
+  csvJobToken++;
+  csvPreviewState = null;
+  document.getElementById('csvPreview').classList.add('hidden');
+  document.getElementById('csvStatus').textContent = '';
+  loadOrResetInput();
+}
+
+function loadOrResetInput() {
+  if (!currentTrainer) return;
+  var year = document.getElementById('targetYear').value;
+  var month = document.getElementById('targetMonth').value;
+  var loaded = loadInput(currentTrainer.id, year, month);
+  currentInputState = loaded.data;
+  pendingStorageBackup = loaded.migrated ? loaded.raw : null;
+  setFormFromData(currentInputState);
+  calcAndSave({ skipSave:true });
+  var csvStatus = document.getElementById('csvStatus');
+  csvStatus.textContent = '';
+  if (loaded.error) {
+    appendBox(csvStatus, 'error', 'この月の保存データを読み込めませんでした。元データは移行バックアップ対象として保持しています: ' + loaded.error.message);
+  } else if (loaded.migrated) {
+    appendBox(csvStatus, 'info', '旧形式の保存データを読み込みました。次回保存時にv5移行バックアップを残します。');
+  } else if (currentInputState.csvImport) {
+    appendBox(csvStatus, 'info', 'CSV取込済み: ' + (currentInputState.csvImport.importedAt || '日時不明') +
+      (currentInputState.csvImport.containsFuture ? '（予定を含む）' : ''));
+  }
+}
+
+function resetInput() {
+  if (!currentTrainer || !confirm('この担当者・対象月の入力をリセットしますか？CSV取込情報と手動調整も0になります。')) return;
+  var year = document.getElementById('targetYear').value;
+  var month = document.getElementById('targetMonth').value;
+  var data = blankInputData(currentTrainer.id, year, month);
+  var key = inputKey(currentTrainer.id, year, month);
+  var previousRaw = localStorage.getItem(key);
+  try {
+    writeInputData(data, previousRaw, 'before_reset_v6_backup');
+    currentInputState = data; pendingStorageBackup = null;
+    setFormFromData(data); calcAndSave({ skipSave:true });
+    cancelCsvPreview();
+    document.getElementById('csvStatus').textContent = '';
+    appendBox(document.getElementById('csvStatus'), 'success', 'リセットしました。直前データはブラウザ内の復元用バックアップへ保持しました。');
+  } catch (error) {
+    showFormError('リセットを保存できませんでした。元データは変更していません: ' + error.message);
+  }
+}
+
+function switchTab(tab) {
+  document.getElementById('tabInput').classList.toggle('hidden', tab !== 'input');
+  document.getElementById('tabSummary').classList.toggle('hidden', tab !== 'summary');
+  document.querySelectorAll('#trainerView .tab-btn').forEach(function(button, index) {
+    button.classList.toggle('active', (index === 0 && tab === 'input') || (index === 1 && tab === 'summary'));
+  });
+  if (tab === 'summary') calcAndSave();
+}
+
+function downloadJsonObject(data, fileName) {
+  var blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+  var url = URL.createObjectURL(blob);
+  var anchor = document.createElement('a'); anchor.href = url; anchor.download = fileName; anchor.click();
+  setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+}
+
+function saveJSON() {
+  if (!currentTrainer) return;
+  try {
+    var data = collectFormData();
+    downloadJsonObject(data, data.targetYear + '年' + String(data.targetMonth).padStart(2, '0') + '月_' + currentTrainer.name + '_請求書.json');
+  } catch (error) {
+    alert('JSONを保存できません: ' + error.message);
+  }
+}
+
+function loadJSON(event) {
+  var file = event.target.files[0];
+  if (!file || !currentTrainer) return;
+  var reader = new FileReader();
+  reader.onload = function(loadEvent) {
+    try {
+      var rawData = JSON.parse(loadEvent.target.result);
+      if (!rawData || typeof rawData !== 'object' || Array.isArray(rawData)) throw new Error('オブジェクト形式のJSONではありません。');
+      if (String(rawData.trainerId || '') !== currentTrainer.id) throw new Error('別のトレーナーのデータです。');
+      var targetYear;
+      var targetMonth;
+      if (!own(rawData, 'targetYear') && !own(rawData, 'targetMonth')) {
+        targetYear = document.getElementById('targetYear').value;
+        targetMonth = document.getElementById('targetMonth').value;
+        if (!confirm('旧形式JSONに対象年月がありません。現在の' + targetYear + '年' + targetMonth + '月として読み込みますか？')) return;
+      } else {
+        if (!own(rawData, 'targetYear') || !own(rawData, 'targetMonth')) throw new Error('対象年または対象月が欠けています。');
+        targetYear = String(finiteNonNegative(rawData.targetYear, '対象年', true));
+        targetMonth = String(finiteNonNegative(rawData.targetMonth, '対象月', true));
+        if (Number(targetYear) < 2000 || Number(targetYear) > 2100 || Number(targetMonth) < 1 || Number(targetMonth) > 12) throw new Error('対象年月が範囲外です。');
+        if (targetYear !== document.getElementById('targetYear').value || targetMonth !== document.getElementById('targetMonth').value) {
+          if (!confirm('JSONは' + targetYear + '年' + targetMonth + '月のデータです。その年月へ切り替えて復元しますか？')) return;
+        }
+      }
+      var candidate = normalizeInputData(rawData, currentTrainer.id, targetYear, targetMonth);
+      var key = inputKey(currentTrainer.id, targetYear, targetMonth);
+      var previousRaw = localStorage.getItem(key);
+      writeInputData(candidate, previousRaw, 'before_json_v6_backup');
+      csvJobToken++;
+      csvPreviewState = null;
+      ensureYearOption(targetYear);
+      document.getElementById('targetYear').value = targetYear;
+      document.getElementById('targetMonth').value = targetMonth;
+      currentInputState = candidate; pendingStorageBackup = null;
+      setFormFromData(candidate); calcAndSave({ skipSave:true });
+      document.getElementById('csvPreview').classList.add('hidden');
+      document.getElementById('csvStatus').textContent = '';
+      appendBox(document.getElementById('csvStatus'), 'success', 'JSONを検証して' + targetYear + '年' + targetMonth + '月へ復元しました。');
+    } catch (error) {
+      alert('JSONの読み込みに失敗しました: ' + error.message + ' 元のデータは変更していません。');
+    } finally {
+      event.target.value = '';
+    }
+  };
+  reader.onerror = function() { alert('JSONファイルを読み取れませんでした。元のデータは変更していません。'); event.target.value = ''; };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function escapeHtml(value) {
+  return String(value == null ? '' : value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function splitNotePages(note) {
+  var logicalLines = [];
+  String(note || '').split(/\r?\n/).forEach(function(line) {
+    if (!line.length) { logicalLines.push(''); return; }
+    for (var index = 0; index < line.length; index += 78) logicalLines.push(line.slice(index, index + 78));
+  });
+  var pages = [];
+  for (var start = 0; start < logicalLines.length; start += 42) pages.push(logicalLines.slice(start, start + 42).join('\n'));
+  return pages;
+}
+
+function buildInvoiceHTML(trainer, data, calculation) {
+  function number(value) { return Math.round(value).toLocaleString('ja-JP'); }
+  function detailRow(name, quantity, unit, rate, amount) {
+    return '<tr>' +
+      '<td style="padding:6px 9px;border-bottom:1px solid #e8e8e8;font-size:12px;">' + escapeHtml(name) + '</td>' +
+      '<td style="padding:6px 9px;border-bottom:1px solid #e8e8e8;font-size:12px;text-align:right;">' + quantity + '</td>' +
+      '<td style="padding:6px 9px;border-bottom:1px solid #e8e8e8;font-size:12px;text-align:center;">' + unit + '</td>' +
+      '<td style="padding:6px 9px;border-bottom:1px solid #e8e8e8;font-size:12px;text-align:right;">' + number(rate) + '</td>' +
+      '<td style="padding:6px 9px;border-bottom:1px solid #e8e8e8;font-size:12px;text-align:right;">' + number(amount) + '</td>' +
+    '</tr>';
+  }
+  var rows = '';
+  rows += detailRow('パーソナルトレーニング45分', data.s45, '本', trainer.rate45, calculation.a45);
+  rows += detailRow('パーソナルトレーニング60分', data.s60, '本', trainer.rate60, calculation.a60);
+  rows += detailRow('パーソナルトレーニング75分', data.s75, '本', trainer.rate75, calculation.a75);
+  rows += detailRow('ペアトレーニング45分', data.p45, '本', trainer.ratePair45, calculation.aPair45);
+  rows += detailRow('ペアトレーニング60分', data.p60, '本', trainer.ratePair60, calculation.aPair60);
+  rows += detailRow('カウンセリング成約', data.cs, '本', trainer.rateCounselSuccess, calculation.aCS);
+  rows += detailRow('カウンセリング未成約', data.cf, '本', trainer.rateCounselFail, calculation.aCF);
+  rows += detailRow('Google口コミ獲得', data.gr, '件', trainer.rateGoogleReview, calculation.aGR);
+  rows += detailRow('研修業務', data.trainingHours, '時間', trainer.rateTraining, calculation.aTraining);
+  rows += detailRow('電車賃（北千住駅〜西新井駅）', data.trainDays, '片道', trainer.rateTransport, calculation.aTransport);
+  if (data.commitFee > 0) rows += detailRow('店舗コミットボーナス', 1, '回', data.commitFee, calculation.aCommit);
+  if (data.specialFee > 0) rows += detailRow('特別手当', 1, '回', data.specialFee, calculation.aSpecial);
+
+  var noteLines = String(data.note || '').split(/\r?\n/).length;
+  var noteOnFirstPage = data.note && data.note.length <= 180 && noteLines <= 6;
+  var invoiceNumber = String(data.targetYear) + String(data.targetMonth).padStart(2, '0') + '-' + trainer.trainerNumber;
+  var pageStyle = 'width:794px;height:1123px;background:#fff;font-family:\'Hiragino Kaku Gothic ProN\',\'Yu Gothic\',\'Noto Sans JP\',sans-serif;color:#333;box-sizing:border-box;position:relative;overflow:visible;';
+  var html = '<div class="invoice-page" style="' + pageStyle + '">' +
+    '<div style="height:6px;background:#e85555;width:100%;"></div>' +
+    '<div style="padding:28px 46px 36px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;">' +
+        '<div style="font-size:27px;font-weight:700;color:#222;letter-spacing:.12em;">請　求　書</div>' +
+        '<div style="text-align:right;font-size:11px;color:#666;line-height:1.8;"><div>' + escapeHtml(data.invoiceDate || '未設定') + '</div><div>請求番号: ' + escapeHtml(invoiceNumber) + '</div></div>' +
+      '</div>' +
+      '<div style="height:1px;background:#ddd;margin:10px 0 14px;"></div>' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">' +
+        '<div style="flex:1;"><div style="font-size:18px;font-weight:700;color:#222;border-bottom:2px solid #333;display:inline-block;padding-bottom:2px;margin-bottom:6px;">合同会社フレッチャワークス　様</div>' +
+          '<div style="font-size:12px;color:#555;">件名：パーソナルトレーニング' + escapeHtml(data.targetMonth) + '月分</div><div style="font-size:12px;color:#555;">下記のとおりご請求申し上げます。</div></div>' +
+        '<div style="font-size:11px;color:#444;text-align:right;min-width:210px;line-height:1.65;">' +
+          (trainer.postalCode ? '<div>〒' + escapeHtml(trainer.postalCode) + '</div>' : '') +
+          (trainer.address ? '<div>' + escapeHtml(trainer.address) + '</div>' : '') +
+          (trainer.phone ? '<div>TEL: ' + escapeHtml(trainer.phone) + '</div>' : '') +
+          (trainer.email ? '<div>' + escapeHtml(trainer.email) + '</div>' : '') +
+          '<div style="font-size:15px;font-weight:700;color:#222;margin-top:4px;">' + escapeHtml(trainer.name) + '</div>' +
+          (trainer.invoiceNumber ? '<div style="font-size:10px;color:#888;">登録番号: ' + escapeHtml(trainer.invoiceNumber) + '</div>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div style="border:1px solid #ccc;padding:9px 16px;margin-bottom:14px;display:flex;align-items:center;gap:24px;"><div style="font-size:13px;color:#555;">ご請求金額</div><div style="font-size:23px;font-weight:700;color:#222;">¥' + number(calculation.total) + '　-</div></div>' +
+      '<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#f5f5f5;">' +
+        '<th style="padding:7px 9px;text-align:left;border:1px solid #e0e0e0;width:42%;">品番・品名</th><th style="padding:7px 9px;text-align:right;border:1px solid #e0e0e0;width:12%;">数量</th><th style="padding:7px 9px;text-align:center;border:1px solid #e0e0e0;width:8%;">単位</th><th style="padding:7px 9px;text-align:right;border:1px solid #e0e0e0;width:18%;">単価</th><th style="padding:7px 9px;text-align:right;border:1px solid #e0e0e0;width:20%;">金額</th>' +
+      '</tr></thead><tbody style="border:1px solid #e0e0e0;">' + rows + '</tbody></table>' +
+      '<table style="margin-left:auto;border-collapse:collapse;font-size:12px;width:310px;border:1px solid #e0e0e0;border-top:none;">' +
+        '<tr style="background:#f9f9f9;"><td style="padding:6px 12px;border-bottom:1px solid #e0e0e0;color:#555;">小計</td><td style="padding:6px 12px;border-bottom:1px solid #e0e0e0;text-align:right;">' + number(calculation.subtotal) + '</td></tr>' +
+        '<tr style="background:#f9f9f9;"><td style="padding:6px 12px;border-bottom:1px solid #e0e0e0;color:#555;">交通費</td><td style="padding:6px 12px;border-bottom:1px solid #e0e0e0;text-align:right;">' + number(calculation.aTransport) + '</td></tr>' +
+        (trainer.withholding ? '<tr style="background:#f9f9f9;"><td style="padding:6px 12px;border-bottom:1px solid #e0e0e0;color:#555;">源泉徴収税額</td><td style="padding:6px 12px;border-bottom:1px solid #e0e0e0;text-align:right;color:#c0392b;">-' + number(calculation.withholding) + '</td></tr>' : '') +
+        '<tr style="background:#f0f0f0;"><td style="padding:7px 12px;font-weight:700;">合計</td><td style="padding:7px 12px;font-weight:700;text-align:right;">' + number(calculation.total) + '</td></tr>' +
+      '</table>' +
+      (noteOnFirstPage ? '<div style="margin-top:12px;font-size:11px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;"><span style="color:#777;">備考：</span>' + escapeHtml(data.note) + '</div>' : (data.note ? '<div style="margin-top:10px;font-size:11px;color:#777;">備考：次頁参照</div>' : '')) +
+    '</div>' +
+    '<div style="position:absolute;bottom:16px;right:46px;font-size:9px;color:#aaa;">FRECCIA 西新井店</div>' +
+  '</div>';
+
+  if (data.note && !noteOnFirstPage) {
+    splitNotePages(data.note).forEach(function(notePage, index) {
+      html += '<div class="invoice-page" style="' + pageStyle + '"><div style="height:6px;background:#e85555;width:100%;"></div>' +
+        '<div style="padding:42px 52px 52px;"><div style="font-size:20px;font-weight:700;color:#222;margin-bottom:18px;">備考' + (index ? '（続き）' : '') + '</div>' +
+        '<div style="font-size:12px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere;">' + escapeHtml(notePage) + '</div></div>' +
+        '<div style="position:absolute;bottom:16px;left:52px;font-size:9px;color:#aaa;">請求番号: ' + escapeHtml(invoiceNumber) + '</div>' +
+        '<div style="position:absolute;bottom:16px;right:46px;font-size:9px;color:#aaa;">' + (index + 2) + 'ページ</div></div>';
+    });
+  }
+  return html;
+}
+
+async function generatePDF() {
+  if (!currentTrainer) return;
+  if (!window.jspdf || !window.jspdf.jsPDF) { alert('PDFライブラリが読み込まれていません。通信状態を確認してください。入力データは保持されています。'); return; }
+  if (!window.html2canvas) { alert('PDF描画ライブラリが読み込まれていません。通信状態を確認してください。入力データは保持されています。'); return; }
+  var button = document.getElementById('btnPDF');
+  var message = document.getElementById('pdfMsg');
+  button.disabled = true; button.textContent = 'PDF作成中…'; message.textContent = '';
+  var container = document.getElementById('pdfContainer');
+  try {
+    var data = collectFormData();
+    var calculation = calculationFromData(data, currentTrainer);
+    container.innerHTML = buildInvoiceHTML(currentTrainer, data, calculation);
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    var pages = Array.from(container.querySelectorAll('.invoice-page'));
+    if (!pages.length) throw new Error('PDFページを作成できませんでした。');
+    pages.forEach(function(page, index) {
+      if (page.scrollHeight > 1125) throw new Error((index + 1) + 'ページ目の内容が用紙を超えました。備考を短くするか内容を確認してください。');
+    });
+    var JsPdf = window.jspdf.jsPDF;
+    var doc = new JsPdf({ orientation:'portrait', unit:'mm', format:'a4' });
+    for (var index = 0; index < pages.length; index++) {
+      var canvas = await window.html2canvas(pages[index], {
+        scale:2, backgroundColor:'#ffffff', useCORS:true, logging:false, width:794, height:1123, windowWidth:794, windowHeight:1123
+      });
+      if (index > 0) doc.addPage('a4', 'portrait');
+      doc.addImage(canvas.toDataURL('image/jpeg', .97), 'JPEG', 0, 0, 210, 297);
+    }
+    var fileName = data.targetYear + '年' + String(data.targetMonth).padStart(2, '0') + '月分請求書_' + currentTrainer.name.replace(/\s/g, '') + '.pdf';
+    doc.save(fileName);
+    appendBox(message, 'success', 'PDFを作成しました（' + pages.length + 'ページ）。');
+  } catch (error) {
+    appendBox(message, 'error', 'PDF作成失敗: ' + error.message + ' 入力データは変更していません。');
+    console.error(error);
+  } finally {
+    container.textContent = '';
+    button.disabled = false; button.textContent = 'PDFを作成';
+  }
+}
+
+function showAdminView() {
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('appPage').style.display = 'block';
+  document.getElementById('trainerView').classList.add('hidden');
+  document.getElementById('adminView').classList.remove('hidden');
+  document.getElementById('userBadge').textContent = '管理者';
+  document.getElementById('headerTitle').textContent = '管理者画面';
+  renderTrainerList(); switchAdminTab('trainers');
+}
+
+function switchAdminTab(tab) {
+  document.getElementById('adminTabTrainers').classList.toggle('hidden', tab !== 'trainers');
+  document.getElementById('adminTabSettings').classList.toggle('hidden', tab !== 'settings');
+  document.querySelectorAll('#adminView .tab-btn').forEach(function(button, index) {
+    button.classList.toggle('active', (index === 0 && tab === 'trainers') || (index === 1 && tab === 'settings'));
+  });
+}
+
+function renderTrainerList() {
+  var list = document.getElementById('trainerList'); list.textContent = '';
+  trainers.forEach(function(trainer) {
+    var item = document.createElement('div'); item.className = 'trainer-item';
+    var info = document.createElement('div'); info.className = 'trainer-item-info';
+    var name = document.createElement('div'); name.className = 'trainer-item-name'; name.textContent = trainer.name;
+    var meta = document.createElement('div'); meta.className = 'trainer-item-meta';
+    meta.textContent = trainer.trainerNumber + ' / 通常45:¥' + trainer.rate45 + ' 通常60:¥' + trainer.rate60 + ' 通常75:¥' + trainer.rate75 +
+      ' ペア45:¥' + trainer.ratePair45 + ' ペア60:¥' + trainer.ratePair60 + ' / 源泉: ' + (trainer.withholding ? 'あり' : 'なし');
+    info.appendChild(name); info.appendChild(meta);
+    var actions = document.createElement('div'); actions.className = 'trainer-item-actions';
+    var edit = document.createElement('button'); edit.className = 'btn btn-secondary btn-sm'; edit.textContent = '編集'; edit.onclick = function() { openTrainerModal(trainer.id); };
+    var remove = document.createElement('button'); remove.className = 'btn btn-danger btn-sm'; remove.textContent = '削除'; remove.onclick = function() { deleteTrainer(trainer.id); };
+    actions.appendChild(edit); actions.appendChild(remove); item.appendChild(info); item.appendChild(actions); list.appendChild(item);
+  });
+}
+
+function openTrainerModal(trainerId) {
+  document.getElementById('trainerModalError').classList.add('hidden');
+  var trainer = trainerId ? getTrainerById(trainerId) : null;
+  document.getElementById('trainerModalTitle').textContent = trainer ? 'トレーナー編集' : 'トレーナー追加';
+  setElementValue('editTrainerId', trainer ? trainer.id : '');
+  setElementValue('eN', trainer ? trainer.name : '');
+  setElementValue('eTN', trainer ? trainer.trainerNumber : '');
+  setElementValue('ePW', trainer ? trainer.password : '');
+  setElementValue('ePC', trainer ? trainer.postalCode : '');
+  setElementValue('ePH', trainer ? trainer.phone : '');
+  setElementValue('eAD', trainer ? trainer.address : '');
+  setElementValue('eEM', trainer ? trainer.email : '');
+  setElementValue('eIV', trainer ? trainer.invoiceNumber : '');
+  setElementValue('eR45', trainer ? trainer.rate45 : 2100);
+  setElementValue('eR60', trainer ? trainer.rate60 : 2800);
+  setElementValue('eR75', trainer ? trainer.rate75 : 3300);
+  setElementValue('eRP45', trainer ? trainer.ratePair45 : 2800);
+  setElementValue('eRP60', trainer ? trainer.ratePair60 : 3500);
+  setElementValue('eRCS', trainer ? trainer.rateCounselSuccess : 2800);
+  setElementValue('eRCF', trainer ? trainer.rateCounselFail : 1250);
+  setElementValue('eRGR', trainer ? trainer.rateGoogleReview : 750);
+  setElementValue('eRTR', trainer ? trainer.rateTraining : 1250);
+  setElementValue('eRTP', trainer ? trainer.rateTransport : 178);
+  setElementValue('eWH', trainer && !trainer.withholding ? 'false' : 'true');
+  document.getElementById('trainerModal').classList.add('open');
+}
+
+function closeTrainerModal() {
+  document.getElementById('trainerModal').classList.remove('open');
+}
+
+function saveTrainer() {
+  var errorElement = document.getElementById('trainerModalError');
+  errorElement.classList.add('hidden');
+  try {
+    var editId = document.getElementById('editTrainerId').value;
+    var existing = editId ? getTrainerById(editId) : null;
+    var name = document.getElementById('eN').value.trim();
+    var trainerNumber = document.getElementById('eTN').value.trim();
+    var password = document.getElementById('ePW').value.trim();
+    if (!name || !trainerNumber || !password) throw new Error('氏名・トレーナー番号・パスワードは必須です。');
+    var candidate = Object.assign({}, existing || {}, {
+      id:editId || trainerNumber, trainerNumber:trainerNumber, name:name, password:password,
+      postalCode:document.getElementById('ePC').value.trim(), phone:document.getElementById('ePH').value.trim(),
+      address:document.getElementById('eAD').value.trim(), email:document.getElementById('eEM').value.trim(),
+      invoiceNumber:document.getElementById('eIV').value.trim(),
+      rate45:readRate('eR45', '45分単価'), rate60:readRate('eR60', '60分単価'), rate75:readRate('eR75', '75分単価'),
+      ratePair45:readRate('eRP45', 'ペア45分単価'), ratePair60:readRate('eRP60', 'ペア60分単価'),
+      rateCounselSuccess:readRate('eRCS', 'カウンセリング成約単価'), rateCounselFail:readRate('eRCF', 'カウンセリング未成約単価'),
+      rateGoogleReview:readRate('eRGR', 'Google口コミ単価'), rateTraining:readRate('eRTR', '研修時給'), rateTransport:readRate('eRTP', '交通費単価'),
+      withholding:document.getElementById('eWH').value === 'true'
+    });
+    if (trainers.some(function(trainer) { return trainer.trainerNumber === trainerNumber && trainer.id !== editId; })) throw new Error('このトレーナー番号は既に使用されています。');
+    var next = trainers.slice();
+    if (editId) next[next.findIndex(function(trainer) { return trainer.id === editId; })] = candidate;
+    else next.push(candidate);
+    writeTrainerSettings(next, 'before_v6_edit_backup');
+    refreshLoginUsers(); renderTrainerList(); closeTrainerModal();
+  } catch (error) {
+    errorElement.textContent = '保存できません: ' + error.message;
+    errorElement.classList.remove('hidden');
+  }
+}
+
+function deleteTrainer(id) {
+  var trainer = getTrainerById(id);
+  if (!trainer || !confirm('「' + trainer.name + '」を削除しますか？設定バックアップを残してから削除します。')) return;
+  try {
+    writeTrainerSettings(trainers.filter(function(item) { return item.id !== id; }), 'before_v6_delete_backup');
+    refreshLoginUsers(); renderTrainerList();
+  } catch (error) { alert('削除できませんでした。元の設定は変更していません: ' + error.message); }
+}
+
+function adminExportJSON() {
+  downloadJsonObject({ schemaVersion:APP_SCHEMA_VERSION, exportedAt:new Date().toISOString(), trainers:trainers }, 'freccia_trainers_v6.json');
+}
+
+function adminLoadJSON(event) {
+  var file = event.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(loadEvent) {
+    var message = document.getElementById('adminSettingsMsg'); message.textContent = '';
+    try {
+      var parsed = JSON.parse(loadEvent.target.result);
+      var list = Array.isArray(parsed) ? parsed : parsed && parsed.trainers;
+      var candidate = validateTrainerArray(list);
+      writeTrainerSettings(candidate, 'before_v6_import_backup');
+      refreshLoginUsers(); renderTrainerList();
+      appendBox(message, 'success', '設定JSONを検証して読み込みました（' + candidate.length + '件）。');
+    } catch (error) {
+      appendBox(message, 'error', '読み込み失敗: ' + error.message + ' 元の設定は変更していません。');
+    } finally { event.target.value = ''; }
+  };
+  reader.onerror = function() { event.target.value = ''; };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function adminResetDefault() {
+  if (!confirm('初期設定へ戻しますか？現在の設定はブラウザ内の復元用バックアップへ残します。')) return;
+  var message = document.getElementById('adminSettingsMsg'); message.textContent = '';
+  try {
+    writeTrainerSettings(deepClone(DEFAULT_TRAINERS), 'before_v6_reset_backup');
+    refreshLoginUsers(); renderTrainerList();
+    appendBox(message, 'success', '初期設定へ戻しました。');
+  } catch (error) { appendBox(message, 'error', 'リセット失敗: ' + error.message + ' 元の設定は変更していません。'); }
+}
+
+function initializeCsvControls() {
+  var dropZone = document.getElementById('csvDropZone');
+  var input = document.getElementById('csvFileInput');
+  dropZone.onclick = function() { input.click(); };
+  dropZone.onkeydown = function(event) { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); input.click(); } };
+  input.onchange = function(event) { if (event.target.files[0]) processCsvFile(event.target.files[0]); };
+  ['dragenter','dragover'].forEach(function(type) {
+    dropZone.addEventListener(type, function(event) { event.preventDefault(); event.stopPropagation(); dropZone.classList.add('dragover'); });
+  });
+  ['dragleave','drop'].forEach(function(type) {
+    dropZone.addEventListener(type, function(event) { event.preventDefault(); event.stopPropagation(); dropZone.classList.remove('dragover'); });
+  });
+  dropZone.addEventListener('drop', function(event) {
+    var files = event.dataTransfer && event.dataTransfer.files;
+    if (files && files[0]) processCsvFile(files[0]);
+  });
+}
+
+function runSelfTests(displayResults) {
+  var results = [];
+  function test(name, task) {
+    try { task(); results.push({ name:name, passed:true, message:'OK' }); }
+    catch (error) { results.push({ name:name, passed:false, message:error.message }); }
+  }
+  function assert(condition, message) { if (!condition) throw new Error(message); }
+  function quoteCsv(value) {
+    var text = String(value == null ? '' : value);
+    return /[",\r\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+  }
+  function makeCsv(headers, rows) {
+    return [headers].concat(rows).map(function(row) { return row.map(quoteCsv).join(','); }).join('\r\n') + '\r\n';
+  }
+  var headers = ['予約番号','ステータス','スタッフ名','来店日','開始時間','予約時メニュー','会計時メニュー'];
+  var testTrainer = normalizeTrainer({
+    id:'TEST', trainerNumber:'TEST', name:'テスト 太郎', password:'x',
+    rate45:2100, rate60:2800, rate75:3300, ratePair45:2800, ratePair60:3500,
+    rateTraining:1250, rateTransport:178, rateCounselSuccess:2800,
+    rateCounselFail:1250, rateGoogleReview:750, withholding:false
+  });
+  var otherTrainer = Object.assign({}, testTrainer, { id:'OTHER', trainerNumber:'OTHER', name:'別 人' });
+
+  test('計算: 通常3種＋ペア2種を各1本＝14,500円', function() {
+    var calc = calcAmounts(testTrainer, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0);
+    assert(calc.sessionTotal === 14500, '実測 ' + calc.sessionTotal + '円');
+  });
+  test('計算: ペア45分2本＋ペア60分3本＝16,100円', function() {
+    var calc = calcAmounts(testTrainer, 0, 0, 0, 2, 3, 0, 0, 0, 0, 0, 0, 0);
+    assert(calc.sessionTotal === 16100, '実測 ' + calc.sessionTotal + '円');
+  });
+  test('CSV構文: 引用符内カンマ・改行・二重引用符・末尾空行', function() {
+    var rows = parseCsvText('a,b\r\n"c,d","line1\r\nline2""x"\r\n\r\n');
+    assert(rows.length === 2 && rows[1].values[0] === 'c,d' && rows[1].values[1] === 'line1\nline2"x', '引用フィールドの復元が不正');
+  });
+  test('CSV集計: 受付待ち・会計済みを計上、キャンセル・未知状態・対象外を除外', function() {
+    var csv = makeCsv(headers, [
+      ['1','受付待ち','テスト　太郎','20260901','1000','パーソナルトレーニングのみ４５分',''],
+      ['2','会計済み','テスト 太郎','20260902','1100','ペアトレーニングのみ45分',''],
+      ['3','サロンキャンセル','テスト 太郎','20260903','1200','ペアトレーニングのみ60分',''],
+      ['4','確認中','テスト 太郎','20260904','1300','ペアトレーニングのみ60分',''],
+      ['5','受付待ち','テスト 太郎','20260905','1400','無料体験',''],
+      ['6','受付待ち','テスト 太郎','20261001','1500','パーソナルトレーニングのみ60分',''],
+      ['7','受付待ち','別 人','20260906','1600','パーソナルトレーニングのみ60分',''],
+      ['8','受付待ち','テスト 太郎','20260230','1700','パーソナルトレーニングのみ60分','']
+    ]);
+    var preview = analyzeCsvText(csv, { trainer:testTrainer, trainers:[testTrainer, otherTrainer], year:'2026', month:'9', previousData:null, today:new Date(2026,8,1) });
+    assert(preview.counts.s45 === 1 && preview.counts.p45 === 1 && preview.counts.p60 === 0, JSON.stringify(preview.counts));
+    assert(preview.warnings.some(function(message) { return message.indexOf('未知のステータス') >= 0; }), '未知状態の警告なし');
+    assert(preview.warnings.some(function(message) { return message.indexOf('来店日') >= 0; }), '不正日付の警告なし');
+  });
+  test('CSVヘッダー: 列順変更に対応、必須列欠落・重複は停止', function() {
+    var reordered = makeCsv(['予約時メニュー','来店日','スタッフ名','ステータス','予約番号'], [['ペアトレーニングのみ60分','20260901','テスト 太郎','受付待ち','A']]);
+    var ok = analyzeCsvText(reordered, { trainer:testTrainer, trainers:[testTrainer], year:'2026', month:'9', previousData:null, today:new Date(2026,8,1) });
+    assert(ok.counts.p60 === 1 && !ok.hardErrors.length, '列順変更を処理できない');
+    var missing = analyzeCsvText(makeCsv(['予約番号','ステータス','スタッフ名','来店日'], [['A','受付待ち','テスト 太郎','20260901']]), { trainer:testTrainer, trainers:[testTrainer], year:'2026', month:'9', previousData:null });
+    assert(missing.hardErrors.length > 0, '必須列欠落を停止しない');
+    var duplicate = analyzeCsvText(makeCsv(['予約番号','予約番号','ステータス','スタッフ名','来店日','予約時メニュー'], [['A','A','受付待ち','テスト 太郎','20260901','ペアトレーニングのみ45分']]), { trainer:testTrainer, trainers:[testTrainer], year:'2026', month:'9', previousData:null });
+    assert(duplicate.hardErrors.length > 0, '必須列重複を停止しない');
+  });
+  test('重複予約: 同内容は1件、矛盾は停止', function() {
+    var sameRow = ['D1','受付待ち','テスト 太郎','20260901','1000','ペアトレーニングのみ45分',''];
+    var same = analyzeCsvText(makeCsv(headers, [sameRow, sameRow]), { trainer:testTrainer, trainers:[testTrainer], year:'2026', month:'9', previousData:null });
+    assert(same.counts.p45 === 1 && same.notices.some(function(message) { return message.indexOf('1件として') >= 0; }), '同一重複の統合失敗');
+    var changedRow = sameRow.slice(); changedRow[5] = 'ペアトレーニングのみ60分';
+    var conflict = analyzeCsvText(makeCsv(headers, [sameRow, changedRow]), { trainer:testTrainer, trainers:[testTrainer], year:'2026', month:'9', previousData:null });
+    assert(conflict.hardErrors.length > 0, '矛盾重複を停止しない');
+  });
+  test('再取込: キャンセル化・欠落を差分表示し、加算しない', function() {
+    var firstCsv = makeCsv(headers, [
+      ['R1','受付待ち','テスト 太郎','20260901','1000','パーソナルトレーニングのみ45分',''],
+      ['R2','受付待ち','テスト 太郎','20260902','1100','ペアトレーニングのみ45分','']
+    ]);
+    var first = analyzeCsvText(firstCsv, { trainer:testTrainer, trainers:[testTrainer], year:'2026', month:'9', previousData:null });
+    var prior = blankInputData('TEST','2026','9'); prior.s45 = 1; prior.p45 = 1; prior.csvCounts = deepClone(first.counts); prior.csvImport = { records:first.records };
+    var secondCsv = makeCsv(headers, [['R1','サロンキャンセル','テスト 太郎','20260901','1000','パーソナルトレーニングのみ45分','']]);
+    var second = analyzeCsvText(secondCsv, { trainer:testTrainer, trainers:[testTrainer], year:'2026', month:'9', previousData:prior });
+    assert(second.counts.s45 === 0 && second.counts.p45 === 0, '置換でなく加算された');
+    assert(second.diff.cancelled === 1 && second.diff.missing === 1, JSON.stringify(second.diff));
+  });
+  test('文字コード: UTF-8とBOM付きUTF-8を判定', function() {
+    var plain = new TextEncoder().encode('予約番号,ステータス');
+    var bom = new Uint8Array(plain.length + 3); bom.set([0xEF,0xBB,0xBF]); bom.set(plain,3);
+    assert(decodeCsvBuffer(plain.buffer).encoding === 'UTF-8', 'UTF-8判定失敗');
+    assert(decodeCsvBuffer(bom.buffer).encoding === 'UTF-8 BOM', 'BOM判定失敗');
+  });
+  test('旧データ移行: ペア本数は0補完、保存済み単価0は維持', function() {
+    var migrated = normalizeInputData({ s45:3, s60:2, s75:1, cs:0, cf:0, gr:0, commitFee:0, specialFee:0, trainingHours:0, trainDays:0 }, 'TEST','2026','9');
+    var rate = normalizeTrainer({ id:'X', trainerNumber:'X', name:'X', password:'x', rate45:0, rate60:0, rate75:0, ratePair45:0, rateTraining:0, rateTransport:0 });
+    assert(migrated.p45 === 0 && migrated.p60 === 0 && migrated.s45 === 3, '旧入力移行失敗');
+    assert(rate.ratePair45 === 0 && rate.ratePair60 === 3500, '単価0維持または不足値補完失敗');
+  });
+  test('PDF明細: ペア2行を含み、長い備考は別ページ', function() {
+    var data = blankInputData('TEST','2026','9'); SESSION_KEYS.forEach(function(key) { data[key] = 1; }); data.note = new Array(1001).join('長');
+    var html = buildInvoiceHTML(testTrainer, data, calculationFromData(data, testTrainer));
+    assert(html.indexOf('ペアトレーニング45分') >= 0 && html.indexOf('ペアトレーニング60分') >= 0, 'ペア明細がない');
+    assert((html.match(/class="invoice-page"/g) || []).length >= 2, '長い備考が改ページされない');
+  });
+
+  if (displayResults) {
+    var output = document.getElementById('selfTestMsg'); output.textContent = '';
+    results.forEach(function(result) { appendBox(output, result.passed ? 'success' : 'error', (result.passed ? '合格: ' : '不合格: ') + result.name + (result.passed ? '' : ' — ' + result.message)); });
+  }
+  return { passed:results.every(function(result) { return result.passed; }), results:results };
+}
+
+document.getElementById('loginPass').addEventListener('keydown', function(event) { if (event.key === 'Enter') doLogin(); });
+loadTrainers();
+refreshLoginUsers();
+initializeCsvControls();
+if (startupWarnings.length) showLoginError(startupWarnings.join(' '));
+
+window.FRECCIA_TEST_API = {
+  version:APP_SCHEMA_VERSION,
+  parseCsvText:parseCsvText,
+  decodeCsvBuffer:decodeCsvBuffer,
+  analyzeCsvText:analyzeCsvText,
+  validVisitDate:validVisitDate,
+  normalizeText:normalizeText,
+  normalizeTrainer:normalizeTrainer,
+  normalizeInputData:normalizeInputData,
+  calcAmounts:calcAmounts,
+  calculationFromData:calculationFromData,
+  buildInvoiceHTML:buildInvoiceHTML,
+  runSelfTests:runSelfTests,
+  zeroCounts:zeroCounts,
+  defaults:deepClone(DEFAULT_TRAINERS)
+};
+</script>
+</body>
+</html>

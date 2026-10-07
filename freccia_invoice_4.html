@@ -1891,9 +1891,37 @@ function collectFormData() {
   return data;
 }
 
+function effectiveTrainerForPeriod(trainer, year, month) {
+  var effective = Object.assign({}, trainer);
+  var ym = Number(String(year) + String(month).padStart(2, '0'));
+
+  // 研修時給: 2026年10月分から1,280円。2026年9月分以前は1,250円。
+  effective.rateTraining = ym >= 202610 ? Math.max(1280, Number(trainer.rateTraining) || 0) : 1250;
+
+  // 庄司トレーナー: 2026年10月分から各セッションフィーを100円アップ。
+  // 過去月を再作成しても当時の単価を維持する。
+  if (trainer.id === 'T002') {
+    if (ym >= 202610) {
+      effective.rate45 = Math.max(2200, Number(trainer.rate45) || 0);
+      effective.rate60 = Math.max(2900, Number(trainer.rate60) || 0);
+      effective.rate75 = Math.max(3400, Number(trainer.rate75) || 0);
+      effective.ratePair45 = Math.max(2900, Number(trainer.ratePair45) || 0);
+      effective.ratePair60 = Math.max(3600, Number(trainer.ratePair60) || 0);
+    } else {
+      effective.rate45 = 2100;
+      effective.rate60 = 2800;
+      effective.rate75 = 3300;
+      effective.ratePair45 = 2800;
+      effective.ratePair60 = 3500;
+    }
+  }
+  return effective;
+}
+
 function calculationFromData(data, trainer) {
+  var effectiveTrainer = effectiveTrainerForPeriod(trainer, data.targetYear, data.targetMonth);
   return calcAmounts(
-    trainer, data.s45, data.s60, data.s75, data.p45, data.p60,
+    effectiveTrainer, data.s45, data.s60, data.s75, data.p45, data.p60,
     data.trainingHours, data.trainDays, data.cs, data.cf, data.gr,
     data.commitFee, data.specialFee
   );
@@ -2554,6 +2582,7 @@ function calcAndSave(options) {
 function updateSummaryTab(trainer, data, calculation) {
   var year = data.targetYear;
   var month = data.targetMonth;
+  var effectiveTrainer = effectiveTrainerForPeriod(trainer, year, month);
   var ym = String(year) + String(month).padStart(2, '0');
   document.getElementById('invoiceNumber').textContent = ym + '-' + trainer.trainerNumber;
   document.getElementById('invoiceDateDisp').textContent = data.invoiceDate || '未設定';
@@ -2572,15 +2601,15 @@ function updateSummaryTab(trainer, data, calculation) {
     });
     body.appendChild(tr);
   }
-  addRow('パーソナルトレーニング45分', data.s45, '本', trainer.rate45, calculation.a45);
-  addRow('パーソナルトレーニング60分', data.s60, '本', trainer.rate60, calculation.a60);
-  addRow('パーソナルトレーニング75分', data.s75, '本', trainer.rate75, calculation.a75);
-  addRow('ペアトレーニング45分', data.p45, '本', trainer.ratePair45, calculation.aPair45);
-  addRow('ペアトレーニング60分', data.p60, '本', trainer.ratePair60, calculation.aPair60);
+  addRow('パーソナルトレーニング45分', data.s45, '本', effectiveTrainer.rate45, calculation.a45);
+  addRow('パーソナルトレーニング60分', data.s60, '本', effectiveTrainer.rate60, calculation.a60);
+  addRow('パーソナルトレーニング75分', data.s75, '本', effectiveTrainer.rate75, calculation.a75);
+  addRow('ペアトレーニング45分', data.p45, '本', effectiveTrainer.ratePair45, calculation.aPair45);
+  addRow('ペアトレーニング60分', data.p60, '本', effectiveTrainer.ratePair60, calculation.aPair60);
   addRow('カウンセリング成約', data.cs, '本', trainer.rateCounselSuccess, calculation.aCS);
   addRow('カウンセリング未成約', data.cf, '本', trainer.rateCounselFail, calculation.aCF);
   addRow('Google口コミ獲得', data.gr, '件', trainer.rateGoogleReview, calculation.aGR);
-  addRow('研修業務', data.trainingHours, '時間', trainer.rateTraining, calculation.aTraining);
+  addRow('研修業務', data.trainingHours, '時間', effectiveTrainer.rateTraining, calculation.aTraining);
   addRow('電車賃', data.trainDays, '片道', trainer.rateTransport, calculation.aTransport);
   if (data.commitFee > 0) addRow('店舗コミットボーナス', 1, '回', data.commitFee, calculation.aCommit);
   if (data.specialFee > 0) addRow('特別手当', 1, '回', data.specialFee, calculation.aSpecial);
@@ -2806,6 +2835,7 @@ function splitNotePages(note) {
 }
 
 function buildInvoiceHTML(trainer, data, calculation) {
+  var effectiveTrainer = effectiveTrainerForPeriod(trainer, data.targetYear, data.targetMonth);
   function number(value) { return Math.round(value).toLocaleString('ja-JP'); }
   function detailRow(name, quantity, unit, rate, amount) {
     return '<tr>' +
@@ -2817,15 +2847,15 @@ function buildInvoiceHTML(trainer, data, calculation) {
     '</tr>';
   }
   var rows = '';
-  rows += detailRow('パーソナルトレーニング45分', data.s45, '本', trainer.rate45, calculation.a45);
-  rows += detailRow('パーソナルトレーニング60分', data.s60, '本', trainer.rate60, calculation.a60);
-  rows += detailRow('パーソナルトレーニング75分', data.s75, '本', trainer.rate75, calculation.a75);
-  rows += detailRow('ペアトレーニング45分', data.p45, '本', trainer.ratePair45, calculation.aPair45);
-  rows += detailRow('ペアトレーニング60分', data.p60, '本', trainer.ratePair60, calculation.aPair60);
+  rows += detailRow('パーソナルトレーニング45分', data.s45, '本', effectiveTrainer.rate45, calculation.a45);
+  rows += detailRow('パーソナルトレーニング60分', data.s60, '本', effectiveTrainer.rate60, calculation.a60);
+  rows += detailRow('パーソナルトレーニング75分', data.s75, '本', effectiveTrainer.rate75, calculation.a75);
+  rows += detailRow('ペアトレーニング45分', data.p45, '本', effectiveTrainer.ratePair45, calculation.aPair45);
+  rows += detailRow('ペアトレーニング60分', data.p60, '本', effectiveTrainer.ratePair60, calculation.aPair60);
   rows += detailRow('カウンセリング成約', data.cs, '本', trainer.rateCounselSuccess, calculation.aCS);
   rows += detailRow('カウンセリング未成約', data.cf, '本', trainer.rateCounselFail, calculation.aCF);
   rows += detailRow('Google口コミ獲得', data.gr, '件', trainer.rateGoogleReview, calculation.aGR);
-  rows += detailRow('研修業務', data.trainingHours, '時間', trainer.rateTraining, calculation.aTraining);
+  rows += detailRow('研修業務', data.trainingHours, '時間', effectiveTrainer.rateTraining, calculation.aTraining);
   rows += detailRow('電車賃（北千住駅〜西新井駅）', data.trainDays, '片道', trainer.rateTransport, calculation.aTransport);
   if (data.commitFee > 0) rows += detailRow('店舗コミットボーナス', 1, '回', data.commitFee, calculation.aCommit);
   if (data.specialFee > 0) rows += detailRow('特別手当', 1, '回', data.specialFee, calculation.aSpecial);
@@ -3173,6 +3203,24 @@ function runSelfTests(displayResults) {
     assert(migrated.p45 === 0 && migrated.p60 === 0 && migrated.s45 === 3, '旧入力移行失敗');
     assert(rate.ratePair45 === 0 && rate.ratePair60 === 3500, '単価0維持または不足値補完失敗');
   });
+  test('期間別単価: 研修は9月1,250円・10月1,280円', function() {
+    var sep = effectiveTrainerForPeriod(testTrainer, '2026', '9');
+    var oct = effectiveTrainerForPeriod(testTrainer, '2026', '10');
+    assert(sep.rateTraining === 1250 && oct.rateTraining === 1280, '研修時給の切替失敗');
+  });
+  test('期間別単価: 庄司は10月から全セッション+100円、9月は旧単価', function() {
+    var shoji = normalizeTrainer({
+      id:'T002', trainerNumber:'T002', name:'庄司 郁也', password:'x',
+      rate45:2100, rate60:2800, rate75:3300, ratePair45:2800, ratePair60:3500,
+      rateTraining:1280, rateTransport:178, rateCounselSuccess:2800,
+      rateCounselFail:1250, rateGoogleReview:750, withholding:true
+    });
+    var sep = effectiveTrainerForPeriod(shoji, '2026', '9');
+    var oct = effectiveTrainerForPeriod(shoji, '2026', '10');
+    assert(sep.rate45 === 2100 && sep.rate60 === 2800 && sep.rate75 === 3300 && sep.ratePair45 === 2800 && sep.ratePair60 === 3500, '9月旧単価の保持失敗');
+    assert(oct.rate45 === 2200 && oct.rate60 === 2900 && oct.rate75 === 3400 && oct.ratePair45 === 2900 && oct.ratePair60 === 3600, '10月新単価の適用失敗');
+  });
+
   test('PDF明細: ペア2行を含み、長い備考は別ページ', function() {
     var data = blankInputData('TEST','2026','9'); SESSION_KEYS.forEach(function(key) { data[key] = 1; }); data.note = new Array(1001).join('長');
     var html = buildInvoiceHTML(testTrainer, data, calculationFromData(data, testTrainer));

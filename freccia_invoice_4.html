@@ -1576,21 +1576,21 @@ var DEFAULT_TRAINERS = [
     postalCode:'120-0021', address:'東京都足立区日ノ出町８ー８ アネックスすずらん203号室',
     phone:'080-4372-0058', email:'b19126as@gmail.com', invoiceNumber:'T4810324944389',
     rate45:2100, rate60:2800, rate75:3300, ratePair45:2800, ratePair60:3500,
-    rateTraining:1250, rateTransport:178, rateCounselSuccess:2800,
+    rateTraining:1280, rateTransport:178, rateCounselSuccess:2800,
     rateCounselFail:1250, rateGoogleReview:750, withholding:true
   },
   {
     id:'T002', trainerNumber:'T002', name:'庄司 郁也', password:'2222',
     postalCode:'', address:'', phone:'', email:'', invoiceNumber:'',
     rate45:2100, rate60:2800, rate75:3300, ratePair45:2800, ratePair60:3500,
-    rateTraining:1250, rateTransport:178, rateCounselSuccess:2800,
+    rateTraining:1280, rateTransport:178, rateCounselSuccess:2800,
     rateCounselFail:1250, rateGoogleReview:750, withholding:true
   },
   {
     id:'T000', trainerNumber:'T000', name:'矢作 勇気', password:'3333',
     postalCode:'', address:'', phone:'', email:'', invoiceNumber:'',
     rate45:2100, rate60:2800, rate75:3300, ratePair45:2800, ratePair60:3500,
-    rateTraining:1250, rateTransport:178, rateCounselSuccess:2800,
+    rateTraining:1280, rateTransport:178, rateCounselSuccess:2800,
     rateCounselFail:1250, rateGoogleReview:750, withholding:true
   }
 ];
@@ -1749,7 +1749,8 @@ function normalizeTrainer(trainer) {
   if (t.rate75 == null) t.rate75 = 0;
   if (t.ratePair45 == null) t.ratePair45 = 2800;
   if (t.ratePair60 == null) t.ratePair60 = 3500;
-  if (t.rateTraining == null) t.rateTraining = 0;
+  if (t.rateTraining == null) t.rateTraining = 1280;
+  if (t.rateTraining === 1250) t.rateTraining = 1280; // 2026-10-01以降の研修時給へ更新
   if (t.rateTransport == null) t.rateTransport = 0;
   return t;
 }
@@ -2975,7 +2976,7 @@ function openTrainerModal(trainerId) {
   setElementValue('eRCS', trainer ? trainer.rateCounselSuccess : 2800);
   setElementValue('eRCF', trainer ? trainer.rateCounselFail : 1250);
   setElementValue('eRGR', trainer ? trainer.rateGoogleReview : 750);
-  setElementValue('eRTR', trainer ? trainer.rateTraining : 1250);
+  setElementValue('eRTR', trainer ? trainer.rateTraining : 1280);
   setElementValue('eRTP', trainer ? trainer.rateTransport : 178);
   setElementValue('eWH', trainer && !trainer.withholding ? 'false' : 'true');
   document.getElementById('trainerModal').classList.add('open');
@@ -3098,7 +3099,7 @@ function runSelfTests(displayResults) {
   var testTrainer = normalizeTrainer({
     id:'TEST', trainerNumber:'TEST', name:'テスト 太郎', password:'x',
     rate45:2100, rate60:2800, rate75:3300, ratePair45:2800, ratePair60:3500,
-    rateTraining:1250, rateTransport:178, rateCounselSuccess:2800,
+    rateTraining:1280, rateTransport:178, rateCounselSuccess:2800,
     rateCounselFail:1250, rateGoogleReview:750, withholding:false
   });
   var otherTrainer = Object.assign({}, testTrainer, { id:'OTHER', trainerNumber:'OTHER', name:'別 人' });

@@ -1593,6 +1593,13 @@ var DEFAULT_TRAINERS = [
     rateTraining:1280, rateTransport:178, rateCounselSuccess:2800,
     rateCounselFail:1250, rateGoogleReview:750, withholding:true
   }
+  ,{
+    id:'T003', trainerNumber:'T003', name:'栗林 サスケ', password:'19990608',
+    postalCode:'', address:'', phone:'', email:'', invoiceNumber:'',
+    rate45:2100, rate60:2800, rate75:3300, ratePair45:2800, ratePair60:3500,
+    rateTraining:1280, rateTransport:0, rateCounselSuccess:2800,
+    rateCounselFail:1250, rateGoogleReview:750, withholding:true
+  }
 ];
 
 var currentUser = null;
@@ -1786,6 +1793,7 @@ function loadTrainers() {
     if (raw) {
       var parsed = JSON.parse(raw);
       trainers = validateTrainerArray(parsed);
+      DEFAULT_TRAINERS.forEach(function(t) { if (!trainers.some(function(x) { return x.id === t.id; })) trainers.push(validateTrainer(deepClone(t))); });
       return;
     }
   } catch (error) {

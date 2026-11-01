@@ -1545,7 +1545,7 @@ function adminResetDefault() {
 // ============================================================
 // 初期化
 // ============================================================
-loadTrainers();
+// The later application initialization is the sole trainer-data loader.
 </script>
 <script>
 'use strict';
@@ -1795,7 +1795,7 @@ function loadTrainers() {
       trainers = validateTrainerArray(parsed);
       DEFAULT_TRAINERS.forEach(function(t) { if (!trainers.some(function(x) { return x.id === t.id; })) trainers.push(validateTrainer(deepClone(t))); });
       // Apply the agreed +100 yen session rates to existing browser-saved settings.
-      var needsRateMigration = !localStorage.getItem('freccia_rate_update_20261102');
+      var needsRateMigration = !localStorage.getItem('freccia_rate_update_20261102_admin_v2');
       if (needsRateMigration) {
         var rateKeys = ['rate45','rate60','rate75','ratePair45','ratePair60'];
         trainers.forEach(function(t) {
@@ -1806,7 +1806,7 @@ function loadTrainers() {
           });
         });
         localStorage.setItem(STORAGE_TRAINERS, JSON.stringify(trainers));
-        localStorage.setItem('freccia_rate_update_20261102', 'done');
+        localStorage.setItem('freccia_rate_update_20261102_admin_v2', 'done');
       }
       return;
     }

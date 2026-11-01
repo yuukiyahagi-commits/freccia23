@@ -1575,14 +1575,14 @@ var DEFAULT_TRAINERS = [
     id:'T001', trainerNumber:'T001', name:'東 嵩大', password:'1111',
     postalCode:'120-0021', address:'東京都足立区日ノ出町８ー８ アネックスすずらん203号室',
     phone:'080-4372-0058', email:'b19126as@gmail.com', invoiceNumber:'T4810324944389',
-    rate45:2100, rate60:2800, rate75:3300, ratePair45:2800, ratePair60:3500,
+    rate45:2200, rate60:2900, rate75:3400, ratePair45:2900, ratePair60:3600,
     rateTraining:1280, rateTransport:178, rateCounselSuccess:2800,
     rateCounselFail:1250, rateGoogleReview:750, withholding:true
   },
   {
     id:'T002', trainerNumber:'T002', name:'庄司 郁也', password:'2222',
     postalCode:'', address:'', phone:'', email:'', invoiceNumber:'',
-    rate45:2100, rate60:2800, rate75:3300, ratePair45:2800, ratePair60:3500,
+    rate45:2200, rate60:2900, rate75:3400, ratePair45:2900, ratePair60:3600,
     rateTraining:1280, rateTransport:178, rateCounselSuccess:2800,
     rateCounselFail:1250, rateGoogleReview:750, withholding:true
   },
@@ -1794,6 +1794,20 @@ function loadTrainers() {
       var parsed = JSON.parse(raw);
       trainers = validateTrainerArray(parsed);
       DEFAULT_TRAINERS.forEach(function(t) { if (!trainers.some(function(x) { return x.id === t.id; })) trainers.push(validateTrainer(deepClone(t))); });
+      // Apply the agreed +100 yen session rates to existing browser-saved settings.
+      var needsRateMigration = !localStorage.getItem('freccia_rate_update_20261102');
+      if (needsRateMigration) {
+        var rateKeys = ['rate45','rate60','rate75','ratePair45','ratePair60'];
+        trainers.forEach(function(t) {
+          if (t.id !== 'T001' && t.id !== 'T002') return;
+          var standard = DEFAULT_TRAINERS.find(function(d) { return d.id === t.id; });
+          rateKeys.forEach(function(key) {
+            if (Number(t[key]) < Number(standard[key])) t[key] = standard[key];
+          });
+        });
+        localStorage.setItem(STORAGE_TRAINERS, JSON.stringify(trainers));
+        localStorage.setItem('freccia_rate_update_20261102', 'done');
+      }
       return;
     }
   } catch (error) {
